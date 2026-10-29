@@ -8,6 +8,13 @@
       "when": 1793258395416,
       "tag": "0000_catech_accounts_and_institutions",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793258471329,
+      "tag": "0001_catech_lms_payments_assessments",
+      "breakpoints": true
     }
   ]
 }
