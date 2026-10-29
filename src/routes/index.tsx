@@ -1,24 +1,53 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { LoaderCircle } from "lucide-react";
+import { useAccount } from "@/components/AccountProvider";
+import logoImg from "@/assets/logo-catech.png";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "CATECH Learn — Learning system" },
+      {
+        name: "description",
+        content: "Access your CATECH Learn account and private learning dashboard.",
+      },
+      { property: "og:title", content: "CATECH Learn" },
+      { property: "og:description", content: "Your learning account and campus workspace." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: SystemEntry,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function SystemEntry() {
+  const { user, loading } = useAccount();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!loading) void navigate({ to: user ? "/dashboard" : "/auth", replace: true });
+  }, [user, loading, navigate]);
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+      <div className="flex flex-col items-center gap-3 p-8 rounded-3xl bg-card border border-border/70 shadow-sm max-w-xs w-full text-center">
+        <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-xs">
+          <img
+            src={logoImg}
+            alt="CATECH"
+            className="h-10 w-10 object-contain"
+          />
+        </div>
+        <div>
+          <h1 className="text-lg font-black tracking-tight text-foreground">
+            CATECH <span className="text-primary font-black">Learn</span>
+          </h1>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Authenticating session…</p>
+        </div>
+        <LoaderCircle
+          aria-label="Opening your account"
+          className="h-5 w-5 animate-spin text-primary motion-reduce:animate-none mt-1"
+        />
+      </div>
+    </main>
   );
 }
