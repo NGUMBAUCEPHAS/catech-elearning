@@ -1,0 +1,10 @@
+[
+{"capability":"code","source":"catech-learn.zip TanStack Start app","outcome":"migrate","status":"in_progress","next_action":"copy src"},
+{"capability":"schema","source":"drizzle/migrations 0000-0009","outcome":"migrate","status":"pending","next_action":"apply to Lovable Cloud"},
+{"capability":"records","source":"Supabase (old project)","outcome":"migrate","status":"pending","next_action":"request CSV exports"},
+{"capability":"auth identities","source":"Supabase auth","outcome":"migrate","status":"pending","next_action":"request users export"},
+{"capability":"authorization","source":"RLS + RBAC migrations","outcome":"migrate","status":"pending","next_action":"apply with schema"},
+{"capability":"mpesa payments","source":"Daraja API","outcome":"preserve","status":"pending","next_action":"request MPESA secrets"},
+{"capability":"storage files","source":"Supabase storage buckets","outcome":"migrate","status":"pending","next_action":"check usage"},
+{"capability":"verification","source":"-","outcome":"verify","status":"pending","next_action":"after build"}
+]
