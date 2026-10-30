@@ -15,6 +15,13 @@
       "when": 1793258471329,
       "tag": "0001_catech_lms_payments_assessments",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793340409918,
+      "tag": "0002_catech_comprehensive_rbac",
+      "breakpoints": true
     }
   ]
 }
