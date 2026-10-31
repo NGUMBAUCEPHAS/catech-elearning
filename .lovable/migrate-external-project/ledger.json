@@ -1,10 +1,9 @@
 [
-{"capability":"code","source":"catech-learn.zip TanStack Start app","outcome":"migrate","status":"in_progress","next_action":"copy src"},
-{"capability":"schema","source":"drizzle/migrations 0000-0009","outcome":"migrate","status":"pending","next_action":"apply to Lovable Cloud"},
-{"capability":"records","source":"Supabase (old project)","outcome":"migrate","status":"pending","next_action":"request CSV exports"},
-{"capability":"auth identities","source":"Supabase auth","outcome":"migrate","status":"pending","next_action":"request users export"},
-{"capability":"authorization","source":"RLS + RBAC migrations","outcome":"migrate","status":"pending","next_action":"apply with schema"},
-{"capability":"mpesa payments","source":"Daraja API","outcome":"preserve","status":"pending","next_action":"request MPESA secrets"},
-{"capability":"storage files","source":"Supabase storage buckets","outcome":"migrate","status":"pending","next_action":"check usage"},
-{"capability":"verification","source":"-","outcome":"verify","status":"pending","next_action":"after build"}
+{"capability":"code","source":"catech-learn.zip","outcome":"migrate","status":"done","next_action":"none"},
+{"capability":"schema","source":"10 source migrations","outcome":"migrate","status":"done","next_action":"none"},
+{"capability":"records","source":"old Supabase project","outcome":"migrate","status":"pending","next_action":"user exports tables as CSV"},
+{"capability":"auth identities","source":"old Supabase auth","outcome":"migrate","status":"pending","next_action":"user exports users (id, email)"},
+{"capability":"authorization","source":"RLS + RBAC","outcome":"migrate","status":"done","next_action":"review open-access policies"},
+{"capability":"mpesa payments","source":"Daraja","outcome":"preserve","status":"pending","next_action":"MPESA_* secrets; callback route never existed in source"},
+{"capability":"verification","source":"-","outcome":"verify","status":"partial","next_action":"sign-in page loads, tests pass; live signup/payment not exercised"}
 ]
