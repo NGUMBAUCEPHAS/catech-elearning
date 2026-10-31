@@ -522,6 +522,61 @@ export type Database = {
           },
         ]
       }
+      direct_messages: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string | null
+          is_read: boolean
+          message: string
+          recipient_id: string
+          sender_id: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id?: string | null
+          is_read?: boolean
+          message: string
+          recipient_id: string
+          sender_id: string
+          subject?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string | null
+          is_read?: boolean
+          message?: string
+          recipient_id?: string
+          sender_id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enrollments: {
         Row: {
           course_id: string
@@ -697,33 +752,115 @@ export type Database = {
       }
       institutions: {
         Row: {
+          address: string | null
+          avatar_url: string | null
           code: string
           contact_email: string
           created_at: string
+          description: string | null
           id: string
           name: string
+          phone_number: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          avatar_url?: string | null
           code: string
           contact_email?: string
           created_at?: string
+          description?: string | null
           id?: string
           name: string
+          phone_number?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          avatar_url?: string | null
           code?: string
           contact_email?: string
           created_at?: string
+          description?: string | null
           id?: string
           name?: string
+          phone_number?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      issues: {
+        Row: {
+          admin_response: string | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          institution_id: string | null
+          priority: string
+          reporter_id: string | null
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_response?: string | null
+          category?: string
+          created_at?: string
+          description: string
+          id?: string
+          institution_id?: string | null
+          priority?: string
+          reporter_id?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_response?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          institution_id?: string | null
+          priority?: string
+          reporter_id?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_responded_by_fkey"
+            columns: ["responded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       learning_materials: {
         Row: {
@@ -756,6 +893,54 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "learning_materials_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_notes: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          file_url: string | null
+          id: string
+          lesson_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          lesson_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          lesson_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_notes_lesson_id_fkey"
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
@@ -947,30 +1132,42 @@ export type Database = {
       }
       notifications: {
         Row: {
+          body: string | null
           created_at: string
           id: string
           is_read: boolean
           link: string | null
+          link_ref_id: string | null
+          link_view: string | null
           message: string
           title: string
+          type: string
           user_id: string
         }
         Insert: {
+          body?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
           link?: string | null
-          message: string
+          link_ref_id?: string | null
+          link_view?: string | null
+          message?: string
           title: string
+          type?: string
           user_id: string
         }
         Update: {
+          body?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
           link?: string | null
+          link_ref_id?: string | null
+          link_view?: string | null
           message?: string
           title?: string
+          type?: string
           user_id?: string
         }
         Relationships: [
@@ -1086,27 +1283,81 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_system_settings: {
+        Row: {
+          allow_company_registration: boolean
+          allow_student_registration: boolean
+          created_at: string
+          default_currency: string
+          id: string
+          maintenance_mode: boolean
+          mpesa_paybill: string
+          organization_address: string
+          platform_name: string
+          support_email: string
+          support_phone: string
+          tagline: string
+          updated_at: string
+        }
+        Insert: {
+          allow_company_registration?: boolean
+          allow_student_registration?: boolean
+          created_at?: string
+          default_currency?: string
+          id?: string
+          maintenance_mode?: boolean
+          mpesa_paybill?: string
+          organization_address?: string
+          platform_name?: string
+          support_email?: string
+          support_phone?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Update: {
+          allow_company_registration?: boolean
+          allow_student_registration?: boolean
+          created_at?: string
+          default_currency?: string
+          id?: string
+          maintenance_mode?: boolean
+          mpesa_paybill?: string
+          organization_address?: string
+          platform_name?: string
+          support_email?: string
+          support_phone?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string
           id: string
           institution_id: string | null
+          phone_number: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string
           id: string
           institution_id?: string | null
+          phone_number?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string
           id?: string
           institution_id?: string | null
+          phone_number?: string | null
         }
         Relationships: []
       }
