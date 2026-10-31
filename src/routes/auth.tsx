@@ -53,7 +53,7 @@ function Auth() {
   // Student Registration Fields
   const [studentName, setStudentName] = useState("");
   const [studentPhone, setStudentPhone] = useState("");
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(DEFAULT_SEED_COMPANIES[0].id);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(DEFAULT_SEED_COMPANIES[0]?.id ?? "");
 
   // Company Registration Fields
   const [companyName, setCompanyName] = useState("");

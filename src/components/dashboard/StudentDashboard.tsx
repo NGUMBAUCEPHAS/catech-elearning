@@ -624,10 +624,13 @@ export function StudentDashboard({
         <MpesaPaymentModal
           open={paymentModalOpen}
           onOpenChange={setPaymentModalOpen}
-          courseId={selectedCourseForPayment.id}
-          courseTitle={selectedCourseForPayment.title}
-          amount={selectedCourseForPayment.price}
-          currency={selectedCourseForPayment.currency || "KES"}
+          course={{
+            id: selectedCourseForPayment.id,
+            title: selectedCourseForPayment.title,
+            code: (selectedCourseForPayment as { code?: string }).code ?? "",
+            price: Number(selectedCourseForPayment.price),
+            currency: selectedCourseForPayment.currency || "KES",
+          }}
           onSuccess={() => {
             void queryClient.invalidateQueries({ queryKey: ["courses"] });
             void queryClient.invalidateQueries({ queryKey: ["user-payments"] });

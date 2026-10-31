@@ -453,7 +453,7 @@ function Dashboard() {
           {activeView === "messages" && (
             <DirectMessagingHub
               currentUserId={data.profile.id}
-              currentUserRole={userRole === "institution_admin" ? "company" : userRole}
+              currentUserRole={userRole === "institution_admin" ? "company" : userRole === "teacher" ? "student" : userRole}
               institutionId={selectedCompany?.id}
             />
           )}
