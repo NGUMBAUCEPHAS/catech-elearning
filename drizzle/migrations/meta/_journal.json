@@ -22,6 +22,13 @@
       "when": 1793340409918,
       "tag": "0002_catech_comprehensive_rbac",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793447260398,
+      "tag": "0003_catech_portal_settings_issues",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 
-const migration0002 = readFileSync("drizzle/migrations/0002_institution_foundation.sql", "utf8");
+const migration0002 = readFileSync("docs/source-migrations/0002_institution_foundation.sql", "utf8");
 
 describe("Institution Foundation & Multi-Tenant Security", () => {
   it("enforces table creation with proper constraints and RLS", () => {

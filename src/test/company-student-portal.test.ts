@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 
 const migration0005 = readFileSync(
-  "drizzle/migrations/0005_company_student_portal_enhancements.sql",
+  "docs/source-migrations/0005_company_student_portal_enhancements.sql",
   "utf8",
 );
 
