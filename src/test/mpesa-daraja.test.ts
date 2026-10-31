@@ -7,7 +7,7 @@ import {
 import { readFileSync } from "node:fs";
 
 const migration0003 = readFileSync(
-  "drizzle/migrations/0003_complete_lms_payments_assessments.sql",
+  "docs/source-migrations/0003_complete_lms_payments_assessments.sql",
   "utf8",
 );
 

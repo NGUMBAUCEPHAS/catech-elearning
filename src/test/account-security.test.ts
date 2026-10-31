@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 
-const sql = readFileSync("drizzle/migrations/0000_account_profiles_and_roles.sql", "utf8");
+const sql = readFileSync("docs/source-migrations/0000_account_profiles_and_roles.sql", "utf8");
 const permissions = readFileSync(
-  "drizzle/migrations/0001_restrict_account_column_privileges.sql",
+  "docs/source-migrations/0001_restrict_account_column_privileges.sql",
   "utf8",
 );
 describe("Account permissions", () => {
