@@ -43,6 +43,13 @@
       "when": 1793599989514,
       "tag": "0005_cloud_onboarding_phone_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793600067029,
+      "tag": "0006_cloud_profile_personal_field_grants",
+      "breakpoints": true
     }
   ]
 }

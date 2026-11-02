@@ -1,0 +1,1 @@
+GRANT UPDATE (display_name, avatar_url, phone_number, bio) ON public.profiles TO authenticated;
