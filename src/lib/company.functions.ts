@@ -112,113 +112,33 @@ export const DEFAULT_SEED_COMPANIES: Array<CompanySummary & { phone_number: stri
   },
 ];
 
-// Helper to seed partner companies into database if missing
+// Company discovery is a read-only projection from Lovable Cloud.
 export const seedDefaultCompaniesFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ success: boolean; message: string; count: number }> => {
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      let count = 0;
-      for (const comp of DEFAULT_SEED_COMPANIES) {
-        const { error } = await supabaseAdmin.from("institutions" as never).upsert(
-          {
-            id: comp.id,
-            name: comp.name,
-            code: comp.code,
-            contact_email: comp.contact_email,
-            phone_number: comp.phone_number,
-            description: comp.description,
-            address: comp.address,
-            status: "active",
-          } as never,
-          { onConflict: "code" } as never,
-        );
-        if (!error) count++;
-      }
-      return { success: true, message: `Successfully seeded ${count} partner companies.`, count };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Seeding failed";
-      return { success: false, message: msg, count: 0 };
-    }
+  .handler(async ({ context }) => {
+    const { data: allowed, error } = await context.supabase.rpc("is_platform_admin");
+    if (error || !allowed) throw new Error("Platform administrator access required");
+    return { success: true, message: "Companies are managed in the company directory.", count: 0 };
   });
 
-// 1. List all registered companies available for students to browse and choose
 export const listPublicCompanies = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<CompanySummary[]> => {
-    try {
-      // 1. Query active institutions
-      const { data: dbInstitutions, error } = await context.supabase
-        .from("institutions" as never)
-        .select("id, name, code, contact_email, phone_number, description, address, avatar_url, status, created_at" as never)
-        .eq("status" as never, "active" as never)
-        .order("name", { ascending: true });
-
-      let list = (dbInstitutions as unknown as CompanySummary[]) || [];
-
-      // 2. If fewer than standard companies exist, attempt background upsert
-      const existingCodes = new Set(list.map((c) => c.code.toUpperCase()));
-      const missingDefaults = DEFAULT_SEED_COMPANIES.filter(
-        (def) => !existingCodes.has(def.code.toUpperCase()),
-      );
-
-      if (missingDefaults.length > 0) {
-        try {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          for (const item of missingDefaults) {
-            await supabaseAdmin.from("institutions" as never).upsert(
-              {
-                id: item.id,
-                name: item.name,
-                code: item.code,
-                contact_email: item.contact_email,
-                phone_number: item.phone_number,
-                description: item.description,
-                address: item.address,
-                status: "active",
-              } as never,
-              { onConflict: "code" } as never,
-            );
-          }
-          // Refetch after inserting
-          const { data: refreshed } = await context.supabase
-            .from("institutions" as never)
-            .select("id, name, code, contact_email, phone_number, description, address, avatar_url, status, created_at" as never)
-            .eq("status" as never, "active" as never)
-            .order("name", { ascending: true });
-          if (refreshed && (refreshed as unknown as CompanySummary[]).length > 0) {
-            list = refreshed as unknown as CompanySummary[];
-          }
-        } catch {
-          // If admin insertion fails, merge fallback defaults into response
-          list = [...list, ...missingDefaults];
-        }
-      }
-
-      // If still empty (e.g. database unmigrated), return default seed list
-      if (list.length === 0) {
-        list = [...DEFAULT_SEED_COMPANIES];
-      }
-
-      // 3. Fetch course counts
-      const { data: courses } = await context.supabase
-        .from("courses" as never)
-        .select("institution_id" as never)
-        .eq("is_published" as never, true);
-
-      const countMap = new Map<string, number>();
-      for (const c of (courses as unknown as Array<{ institution_id: string }>) || []) {
-        countMap.set(c.institution_id, (countMap.get(c.institution_id) || 0) + 1);
-      }
-
-      return list.map((inst) => ({
-        ...inst,
-        course_count: countMap.get(inst.id) ?? inst.course_count ?? 1,
-      }));
-    } catch {
-      // Graceful fallback on connection/abort errors
-      return DEFAULT_SEED_COMPANIES;
-    }
+  .handler(async (): Promise<CompanySummary[]> => {
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!url || !key) throw new Error("Company directory is unavailable");
+    const client = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { fetch: (input, init) => {
+        const headers = new Headers(init?.headers);
+        if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
+        headers.set("apikey", key);
+        return fetch(input, { ...init, headers });
+      } },
+    });
+    const { data, error } = await client.rpc("list_active_company_summaries");
+    if (error) throw new Error(error.message);
+    return data as CompanySummary[];
   });
 
 // 2. Register or provision a company for a user
@@ -237,89 +157,14 @@ export const registerCompanyFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => registerCompanySchema.parse(input))
   .handler(async ({ data, context }) => {
-    let institutionId: string | null = null;
-
-    // Check if institution code already exists
-    const { data: existing } = await context.supabase
-      .from("institutions")
-      .select("id, name")
-      .eq("code", data.code)
-      .maybeSingle();
-
-    if (existing) {
-      institutionId = existing.id;
-    } else {
-      // Try creating via supabaseAdmin or direct RPC
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: newInst, error: instErr } = await supabaseAdmin
-          .from("institutions")
-          .insert({
-            name: data.name,
-            code: data.code,
-            contact_email: data.contact_email,
-            status: "active",
-          })
-          .select("id")
-          .single();
-
-        if (instErr) throw instErr;
-        institutionId = newInst.id;
-      } catch {
-        // If supabaseAdmin failed, try client insert
-        const { data: clientInst, error: clientErr } = await context.supabase
-          .from("institutions")
-          .insert({
-            name: data.name,
-            code: data.code,
-            contact_email: data.contact_email,
-            status: "active",
-          })
-          .select("id")
-          .single();
-
-        if (clientErr) throw new Error(`Failed to create company: ${clientErr.message}`);
-        institutionId = clientInst.id;
-      }
-    }
-
-    if (!institutionId) {
-      throw new Error("Unable to establish company profile.");
-    }
-
-    // Assign current user as institution_admin in institution_memberships
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin.from("institution_memberships").upsert(
-        {
-          institution_id: institutionId,
-          user_id: context.userId,
-          role: "institution_admin",
-          active: true,
-        },
-        { onConflict: "institution_id,user_id" },
-      );
-    } catch {
-      await context.supabase.from("institution_memberships").upsert(
-        {
-          institution_id: institutionId,
-          user_id: context.userId,
-          role: "institution_admin",
-          active: true,
-        },
-        { onConflict: "institution_id,user_id" },
-      );
-    }
-
-    // Update user profile with company phone if provided
-    if (data.phone_number) {
-      await context.supabase
-        .from("profiles")
-        .update({ institution_id: institutionId })
-        .eq("id", context.userId);
-    }
-
-    return { success: true, institutionId };
+    const { error } = await context.supabase.rpc("complete_account_onboarding");
+    if (error) throw new Error(error.message);
+    const { data: membership, error: memberError } = await context.supabase
+      .from("institution_memberships").select("institution_id, institutions(code)")
+      .eq("user_id", context.userId).eq("role", "institution_admin").maybeSingle();
+    if (memberError) throw new Error(memberError.message);
+    if (!membership || membership.institutions?.code !== data.code) throw new Error("Company registration does not match your verified account");
+    return { success: true, institutionId: membership.institution_id };
   });
 
 // 3. Get Company's Learners Directory with contacts and learning progress
@@ -709,18 +554,7 @@ export const updateCompanyProfileFn = createServerFn({ method: "POST" })
       .select("id" as never)
       .single();
 
-    if (error) {
-      // Try via supabaseAdmin if user is platform admin
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin
-          .from("institutions" as never)
-          .update(updatePayload as never)
-          .eq("id" as never, data.institution_id as never);
-      } catch {
-        throw new Error(`Failed to update company profile: ${(error as { message?: string })?.message ?? "unknown error"}`);
-      }
-    }
+    if (error || !updated) throw new Error(`Failed to update company profile: ${error?.message || "Company not found"}`);
 
     return { success: true, message: "Company profile updated successfully." };
   });
@@ -731,36 +565,7 @@ export const associateStudentWithCompanyFn = createServerFn({ method: "POST" })
     z.object({ institution_id: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    // 1. Update user profile institution_id
-    await context.supabase
-      .from("profiles")
-      .update({ institution_id: data.institution_id })
-      .eq("id", context.userId);
-
-    // 2. Add institution_membership as student
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin.from("institution_memberships").upsert(
-        {
-          institution_id: data.institution_id,
-          user_id: context.userId,
-          role: "student",
-          active: true,
-        },
-        { onConflict: "institution_id,user_id" },
-      );
-    } catch {
-      await context.supabase.from("institution_memberships").upsert(
-        {
-          institution_id: data.institution_id,
-          user_id: context.userId,
-          role: "student",
-          active: true,
-        },
-        { onConflict: "institution_id,user_id" },
-      );
-    }
-
+    const { error } = await context.supabase.rpc("join_company_as_student", { _institution_id: data.institution_id });
+    if (error) throw new Error(error.message);
     return { success: true };
   });
-

@@ -44,6 +44,8 @@ export interface PlatformCourseItem {
 export const getPlatformGlobalStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PlatformGlobalStats> => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     // 1. Institutions counts
     const { data: institutions = [] } = await context.supabase
       .from("institutions")
@@ -104,6 +106,8 @@ export const getPlatformGlobalStats = createServerFn({ method: "GET" })
 export const listAllPlatformUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PlatformUserItem[]> => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     // Fetch profiles, user_roles, and memberships
     const [profilesRes, rolesRes, membershipsRes, paymentsRes] = await Promise.all([
       context.supabase.from("profiles").select("id, display_name, avatar_url, created_at").order("created_at", { ascending: false }),
@@ -167,6 +171,8 @@ export const updatePlatformUserRoleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => updateRoleSchema.parse(input))
   .handler(async ({ data, context }) => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     // 1. Upsert into user_roles
     const { error: roleErr } = await context.supabase
       .from("user_roles")
@@ -205,6 +211,8 @@ export const updatePlatformUserRoleFn = createServerFn({ method: "POST" })
 export const listAllPlatformCourses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PlatformCourseItem[]> => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     const { data: courses = [], error } = await context.supabase
       .from("courses" as never)
       .select("id, institution_id, title, code, price, currency, is_published, created_at, profiles(display_name), institutions(name)")
@@ -247,6 +255,8 @@ export const toggleCoursePublishFn = createServerFn({ method: "POST" })
       z.object({ course_id: z.string().uuid(), is_published: z.boolean() }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     const { error } = await context.supabase
       .from("courses" as never)
       .update({ is_published: data.is_published } as never)
@@ -260,6 +270,8 @@ export const toggleCoursePublishFn = createServerFn({ method: "POST" })
 export const listAllPlatformPayments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     const { data: payments = [], error } = await context.supabase
       .from("payments" as never)
       .select("id, institution_id, user_id, course_id, amount, currency, payment_method, status, checkout_request_id, mpesa_receipt_number, phone_number, created_at, courses(title), institutions(name)")
@@ -295,6 +307,8 @@ export const getUserPermissionOverridesFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ user_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<UserPermissionOverrideItem[]> => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: rows = [], error } = await supabaseAdmin
@@ -329,42 +343,14 @@ export const toggleUserPermissionOverrideFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => togglePermSchema.parse(input))
   .handler(async ({ data, context }) => {
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin.from("user_permission_overrides" as never).upsert(
-        {
-          user_id: data.user_id,
-          permission_code: data.permission_code,
-          granted: data.granted,
-          granted_by: context.userId,
-          institution_id: data.institution_id || null,
-        } as never,
-        { onConflict: "user_id,permission_code" } as never,
-      );
-    } catch {
-      await context.supabase.from("user_permission_overrides" as never).upsert(
-        {
-          user_id: data.user_id,
-          permission_code: data.permission_code,
-          granted: data.granted,
-          granted_by: context.userId,
-          institution_id: data.institution_id || null,
-        } as never,
-        { onConflict: "user_id,permission_code" } as never,
-      );
-    }
-
-    // Audit log
-    await context.supabase.from("institution_audit_logs").insert({
-      actor_id: context.userId,
-      action: data.granted ? "superadmin_permission_granted" : "superadmin_permission_deactivated",
-      target_id: data.user_id,
-      details: {
-        permission_code: data.permission_code,
-        granted: data.granted,
-        institution_id: data.institution_id || null,
-      },
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
+    const { error } = await context.supabase.rpc("override_user_permission", {
+      _actor_id: context.userId, _target_user_id: data.user_id,
+      _permission_code: data.permission_code, _granted: data.granted,
+      ...(data.institution_id ? { _institution_id: data.institution_id } : {}),
     });
+    if (error) throw new Error(error.message);
 
     return {
       success: true,
@@ -380,6 +366,8 @@ export const removeUserPermissionOverrideFn = createServerFn({ method: "POST" })
       z.object({ user_id: z.string().uuid(), permission_code: z.string() }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin
@@ -412,6 +400,8 @@ export const assignUserToCompanyFn = createServerFn({ method: "POST" })
         .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin.from("institution_memberships").upsert(
@@ -469,6 +459,8 @@ const DEFAULT_PLATFORM_SETTINGS: PlatformSystemSettings = {
 export const getPlatformSystemSettingsFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PlatformSystemSettings> => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     try {
       const { data, error } = await context.supabase
         .from("platform_system_settings" as never)
@@ -502,6 +494,8 @@ export const updatePlatformSystemSettingsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => updatePlatformSettingsSchema.parse(input))
   .handler(async ({ data, context }) => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       // Check existing row
@@ -557,6 +551,8 @@ export const updateCompanyFullCredentialsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => updateCompanyCredentialsSchema.parse(input))
   .handler(async ({ data, context }) => {
+    const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
+    if (accessError || !allowed) throw new Error("Platform administrator access required");
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

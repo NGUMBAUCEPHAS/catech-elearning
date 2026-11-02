@@ -70,7 +70,7 @@ function Auth() {
   const navigate = useNavigate();
 
   // Fetch available companies for student enrollment
-  const { data: companies = DEFAULT_SEED_COMPANIES } = useQuery({
+  const { data: companies = [] } = useQuery({
     queryKey: ["public-companies"],
     queryFn: () => listPublicCompanies(),
   });

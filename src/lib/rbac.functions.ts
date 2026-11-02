@@ -156,9 +156,8 @@ const overridePermSchema = z.object({
 /** List all system and institution roles visible to the current user. */
 export const listRoles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context: _ctx }): Promise<RbacRole[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+  .handler(async ({ context }): Promise<RbacRole[]> => {
+    const { data, error } = await context.supabase
       .from("roles" as never)
       .select("id, code, name, description, institution_id, is_system")
       .order("is_system", { ascending: false })
@@ -170,9 +169,8 @@ export const listRoles = createServerFn({ method: "GET" })
 /** List all permissions in the system. */
 export const listPermissions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context: _ctx }): Promise<RbacPermission[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+  .handler(async ({ context }): Promise<RbacPermission[]> => {
+    const { data, error } = await context.supabase
       .from("permissions" as never)
       .select("code, category, name, description")
       .order("category")
@@ -188,8 +186,7 @@ export const getMyPermissions = createServerFn({ method: "GET" })
     z.object({ institution_id: z.string().uuid().optional() }).parse(input),
   )
   .handler(async ({ data, context }): Promise<PermissionCode[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: result, error } = await supabaseAdmin.rpc(
+    const { data: result, error } = await context.supabase.rpc(
       "get_user_permissions" as never,
       {
         _user_id: context.userId,
@@ -208,9 +205,8 @@ export const getUserRoles = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) =>
     z.object({ user_id: z.string().uuid() }).parse(input),
   )
-  .handler(async ({ data, context: _ctx }): Promise<UserAssignedRole[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin
+  .handler(async ({ data, context }): Promise<UserAssignedRole[]> => {
+    const { data: rows, error } = await context.supabase
       .from("user_assigned_roles" as never)
       .select("id, user_id, role_id, institution_id, created_at, roles(code, name)")
       .eq("user_id", data.user_id as string);
@@ -238,8 +234,7 @@ export const assignRoleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => assignRoleSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ id: string }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: result, error } = await supabaseAdmin.rpc(
+    const { data: result, error } = await context.supabase.rpc(
       "assign_user_role" as never,
       {
         _actor_id: context.userId,
@@ -257,8 +252,7 @@ export const revokeRoleFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => revokeRoleSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ revoked: boolean }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: result, error } = await supabaseAdmin.rpc(
+    const { data: result, error } = await context.supabase.rpc(
       "revoke_user_role" as never,
       {
         _actor_id: context.userId,
@@ -276,8 +270,7 @@ export const overridePermissionFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => overridePermSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ id: string }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: result, error } = await supabaseAdmin.rpc(
+    const { data: result, error } = await context.supabase.rpc(
       "override_user_permission" as never,
       {
         _actor_id: context.userId,
@@ -299,9 +292,8 @@ export const listRbacAuditLogs = createServerFn({ method: "GET" })
       .object({ institution_id: z.string().uuid().optional(), limit: z.number().int().min(1).max(200).default(50) })
       .parse(input),
   )
-  .handler(async ({ data, context: _ctx }): Promise<RbacAuditEntry[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let query = (supabaseAdmin as unknown as {
+  .handler(async ({ data, context }): Promise<RbacAuditEntry[]> => {
+    let query = (context.supabase as unknown as {
       from(t: string): {
         select(s: string): {
           order(col: string, opts: Record<string, unknown>): {
@@ -354,9 +346,8 @@ export const getRolePermissions = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) =>
     z.object({ role_id: z.string().uuid() }).parse(input),
   )
-  .handler(async ({ data, context: _ctx }): Promise<string[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin
+  .handler(async ({ data, context }): Promise<string[]> => {
+    const { data: rows, error } = await context.supabase
       .from("role_permissions" as never)
       .select("permission_code")
       .eq("role_id", data.role_id as string);

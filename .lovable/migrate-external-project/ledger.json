@@ -1,8 +1,8 @@
 [
 {"capability":"code","source":"catech-learn.zip","outcome":"migrate","status":"done","next_action":"none"},
 {"capability":"schema","source":"10 source migrations","outcome":"migrate","status":"done","next_action":"none"},
-{"capability":"records","source":"old Supabase project","outcome":"migrate","status":"pending","next_action":"user exports tables as CSV"},
-{"capability":"auth identities","source":"old Supabase auth","outcome":"migrate","status":"pending","next_action":"user exports users (id, email)"},
+{"capability":"records","source":"old database","outcome":"exclude by user request","status":"accepted","next_action":"none; new records use Lovable Cloud"},
+{"capability":"auth identities","source":"old auth","outcome":"exclude by user request","status":"accepted","next_action":"create fresh Cloud accounts"},
 {"capability":"authorization","source":"RLS + RBAC","outcome":"migrate","status":"done","next_action":"review open-access policies"},
 {"capability":"mpesa payments","source":"Daraja","outcome":"preserve","status":"pending","next_action":"MPESA_* secrets; callback route never existed in source"},
 {"capability":"verification","source":"-","outcome":"verify","status":"partial","next_action":"sign-in page loads, tests pass; live signup/payment not exercised"}
