@@ -1,5 +1,11 @@
 # Account setup
 
+## Fresh Lovable Cloud connection
+- [ ] Use Cloud only; old records and accounts explicitly excluded by the user.
+- [ ] Repair public company discovery and verified-account onboarding.
+- [ ] Enforce trusted administrator checks and correct payment persistence.
+- [ ] Verify Cloud reads/writes and report external payment or email blockers.
+
 - [x] Enable account sign-in methods and create secure profiles and role storage.
 - [x] Add sign-in, password recovery, and private profile dashboard.
 - [x] Verify account creation, profile persistence, and sign-out with temporary accounts; verify owner isolation and denied role/institution edits.
