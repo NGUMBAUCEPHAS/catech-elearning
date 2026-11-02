@@ -29,6 +29,13 @@
       "when": 1793447260398,
       "tag": "0003_catech_portal_settings_issues",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793599753552,
+      "tag": "0004_cloud_company_discovery_onboarding",
+      "breakpoints": true
     }
   ]
 }

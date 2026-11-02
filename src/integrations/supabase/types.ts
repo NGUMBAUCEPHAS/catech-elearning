@@ -1861,6 +1861,7 @@ export type Database = {
         Args: { _institution_id: string; _manage?: boolean }
         Returns: boolean
       }
+      complete_account_onboarding: { Args: never; Returns: undefined }
       get_user_permissions: {
         Args: { _institution_id?: string; _user_id: string }
         Returns: {
@@ -1890,6 +1891,11 @@ export type Database = {
         }[]
       }
       is_platform_admin: { Args: never; Returns: boolean }
+      join_company_as_student: {
+        Args: { _institution_id: string }
+        Returns: undefined
+      }
+      list_active_company_summaries: { Args: never; Returns: Json }
       override_user_permission: {
         Args: {
           _actor_id: string
