@@ -71,9 +71,7 @@ export const initiateCoursePaymentFn = createServerFn({ method: "POST" })
       .select("id, checkout_request_id")
       .single();
 
-    if (payErr) {
-      console.error("Failed to persist payment:", payErr);
-    }
+    if (payErr) throw new Error("Payment request started, but its record could not be saved. Contact support before retrying.");
 
     const paymentRecord = payment as { id?: string } | null;
     return {
@@ -95,6 +93,7 @@ export const verifyPaymentAndEnrollFn = createServerFn({ method: "POST" })
       .from("payments" as never)
       .select("*")
       .eq("checkout_request_id", data.checkout_request_id)
+      .eq("user_id", context.userId)
       .maybeSingle();
 
     if (error || !payment) throw new Error("Payment record not found");
@@ -107,10 +106,11 @@ export const verifyPaymentAndEnrollFn = createServerFn({ method: "POST" })
     try {
       const { queryStkStatus } = await import("@/lib/mpesa.server");
       const queryResult = await queryStkStatus(data.checkout_request_id);
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
       if (queryResult.ResultCode === "0") {
         // Success: Update payment and create enrollment
-        await context.supabase
+        const { error: updateError } = await supabaseAdmin
           .from("payments" as never)
           .update({
             status: "completed",
@@ -119,9 +119,10 @@ export const verifyPaymentAndEnrollFn = createServerFn({ method: "POST" })
             updated_at: new Date().toISOString(),
           } as never)
           .eq("id", paymentRow["id"] as string);
+        if (updateError) throw new Error(updateError.message);
 
         if (paymentRow["course_id"]) {
-          await context.supabase.from("enrollments" as never).upsert(
+          const { error: enrollmentError } = await supabaseAdmin.from("enrollments" as never).upsert(
             {
               course_id: paymentRow["course_id"],
               user_id: paymentRow["user_id"],
@@ -131,14 +132,16 @@ export const verifyPaymentAndEnrollFn = createServerFn({ method: "POST" })
             } as never,
             { onConflict: "course_id,user_id" },
           );
+          if (enrollmentError) throw new Error(enrollmentError.message);
         }
 
         return { completed: true, message: "Payment confirmed! You are now enrolled." };
       } else if (queryResult.ResultCode === "1032") {
-        await context.supabase
+        const { error: cancelError } = await supabaseAdmin
           .from("payments" as never)
           .update({ status: "cancelled", result_code: 1032, result_desc: queryResult.ResultDesc } as never)
           .eq("id", paymentRow["id"] as string);
+        if (cancelError) throw new Error(cancelError.message);
         return {
           completed: false,
           status: "cancelled",

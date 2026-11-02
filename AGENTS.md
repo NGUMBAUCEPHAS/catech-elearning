@@ -13,3 +13,5 @@
 - Private reads/updates go through authenticated server functions with owner-scoped RLS; roles and institution assignments are never user-editable.
 - New accounts get the student role from a database trigger; elevated roles require trusted provisioning (RBAC functions), never signup metadata.
 - M-Pesa (Daraja) payments run server-side in `src/lib/mpesa.server.ts`; credentials come from server secrets only.
+- Public company discovery uses a read-only database projection; verified onboarding uses transactional RPCs so existing companies cannot be claimed through signup.
+- All platform administration handlers verify the caller through the authenticated role RPC before privileged operations; RBAC RPCs use the authenticated client to preserve caller identity.
