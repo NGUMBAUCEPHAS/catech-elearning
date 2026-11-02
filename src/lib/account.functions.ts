@@ -5,6 +5,8 @@ import { z } from "zod";
 export const getAccount = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { error: onboardingError } = await context.supabase.rpc("complete_account_onboarding");
+    if (onboardingError) throw new Error(onboardingError.message);
     const [profile, roles, memberships] = await Promise.all([
       context.supabase.from("profiles").select("*").eq("id", context.userId).single(),
       context.supabase.from("user_roles").select("role").eq("user_id", context.userId),
@@ -14,27 +16,9 @@ export const getAccount = createServerFn({ method: "GET" })
         .eq("user_id", context.userId),
     ]);
     if (profile.error) throw new Error(profile.error.message);
-    const userClaims = context.claims as Record<string, unknown> | undefined;
-    const userEmail = (userClaims?.["email"] as string | undefined)?.toLowerCase();
-    let userRoles = (roles.data || []).map((row) => row.role);
-
-    // Auto-bootstrap ngumbaucephas2@gmail.com as super_admin
-    if (userEmail === "ngumbaucephas2@gmail.com") {
-      if (!userRoles.includes("super_admin")) {
-        try {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          await supabaseAdmin.from("user_roles").insert({
-            user_id: context.userId,
-            role: "super_admin",
-          });
-          userRoles = [...userRoles, "super_admin"];
-        } catch {
-          if (!userRoles.includes("super_admin")) {
-            userRoles.push("super_admin");
-          }
-        }
-      }
-    }
+    if (roles.error) throw new Error(roles.error.message);
+    if (memberships.error) throw new Error(memberships.error.message);
+    const userRoles = (roles.data || []).map((row) => row.role);
 
     const isPlatformAdmin = userRoles.includes("super_admin");
 
@@ -42,13 +26,12 @@ export const getAccount = createServerFn({ method: "GET" })
     let rbacRoles: Array<{ role_code: string; role_name: string; institution_id: string | null }> = [];
     let rbacPermissions: string[] = [];
     try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const [arResult, permResult] = await Promise.all([
-        supabaseAdmin
+        context.supabase
           .from("user_assigned_roles" as never)
           .select("role_id, institution_id, roles(code, name)")
           .eq("user_id", context.userId),
-        supabaseAdmin.rpc("get_user_permissions" as never, {
+        context.supabase.rpc("get_user_permissions" as never, {
           _user_id: context.userId,
           _institution_id: null,
         } as never),

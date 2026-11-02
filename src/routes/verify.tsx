@@ -29,6 +29,8 @@ export const Route = createFileRoute("/verify")({
           "Verify authentic educational credentials and graduation certificates issued on CATECH Learn.",
       },
       { property: "og:title", content: "CATECH Certificate Registry" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: "Verify authentic institutional certificates with tamper-proof security hashes.",

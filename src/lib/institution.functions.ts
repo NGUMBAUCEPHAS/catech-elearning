@@ -163,24 +163,7 @@ export const listAuditLogs = createServerFn({ method: "GET" })
 export const bootstrapSuperAdminFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ success: boolean; message: string }> => {
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { error } = await supabaseAdmin.rpc("provision_initial_platform_admin", {
-        _user_id: context.userId,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      return {
-        success: true,
-        message: "Super administrator provisioned successfully. Please refresh your session.",
-      };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Unknown bootstrap error";
-      throw new Error(
-        `Bootstrap failed: ${msg}. (Ensure SUPABASE_SERVICE_ROLE_KEY is set in your server environment).`,
-      );
-    }
+    const { data: allowed, error } = await context.supabase.rpc("is_platform_admin");
+    if (error || !allowed) throw new Error("Super administrator access must be granted by a trusted operator after your account is verified.");
+    return { success: true, message: "Your super administrator account is active." };
   });
