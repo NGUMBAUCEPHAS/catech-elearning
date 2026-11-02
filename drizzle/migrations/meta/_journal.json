@@ -36,6 +36,13 @@
       "when": 1793599753552,
       "tag": "0004_cloud_company_discovery_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793599989514,
+      "tag": "0005_cloud_onboarding_phone_defaults",
+      "breakpoints": true
     }
   ]
 }
