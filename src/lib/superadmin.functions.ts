@@ -348,7 +348,7 @@ export const toggleUserPermissionOverrideFn = createServerFn({ method: "POST" })
     const { error } = await context.supabase.rpc("override_user_permission", {
       _actor_id: context.userId, _target_user_id: data.user_id,
       _permission_code: data.permission_code, _granted: data.granted,
-      _institution_id: data.institution_id || undefined,
+      ...(data.institution_id ? { _institution_id: data.institution_id } : {}),
     });
     if (error) throw new Error(error.message);
 
