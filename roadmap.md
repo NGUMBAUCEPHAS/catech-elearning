@@ -1,5 +1,13 @@
 # Account setup
 
+## Commercial redesign and system update
+- [ ] Redesign authentication and role-specific dashboard shell with accessible sidebar/drawer.
+- [ ] Reuse learning, grading, company and admin tools; show real scoped statistics and tables.
+- [ ] Enforce tenant isolation and paid-content access; support managed staff and membership approval.
+- [ ] Provision the requested administrator account through trusted operations.
+- [ ] Add verified M-Pesa callback processing and certificate access.
+- [ ] Verify administrator login, company/student learning workflow, isolation, and desktop/mobile views.
+
 ## Fresh Lovable Cloud connection
 - [x] Use Cloud only; old records and accounts explicitly excluded by the user.
 - [x] Repair public company discovery and verified-account onboarding.
