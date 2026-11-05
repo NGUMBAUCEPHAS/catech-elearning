@@ -3,7 +3,7 @@
 {"capability":"schema","source":"10 source migrations","outcome":"migrate","status":"done","next_action":"none"},
 {"capability":"records","source":"old database","outcome":"exclude by user request","status":"accepted","next_action":"none; new records use Lovable Cloud"},
 {"capability":"auth identities","source":"old auth","outcome":"exclude by user request","status":"accepted","next_action":"create fresh Cloud accounts"},
-{"capability":"authorization","source":"RLS + RBAC","outcome":"migrate","status":"done","next_action":"review open-access policies"},
+{"capability":"authorization","source":"RLS + RBAC","outcome":"migrate","status":"partial","next_action":"platform handlers secured and student denial tested; source LMS open-access policies still require review; provision owner's verified Cloud account"},
 {"capability":"mpesa payments","source":"Daraja","outcome":"preserve","status":"pending","next_action":"MPESA_* secrets; callback route never existed in source"},
-{"capability":"verification","source":"-","outcome":"verify","status":"partial","next_action":"sign-in page loads, tests pass; live signup/payment not exercised"}
+{"capability":"verification","source":"Cloud","outcome":"verify","status":"partial","next_action":"31 tests pass; student/company sign-in, Cloud membership and profile save/reload verified; temporary records removed; email delivery, live payments and all-role flows remain unverified"}
 ]
