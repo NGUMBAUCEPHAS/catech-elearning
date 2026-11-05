@@ -1857,10 +1857,13 @@ export type Database = {
         }
         Returns: string
       }
+      assignment_course: { Args: { _assignment: string }; Returns: string }
       can_access_institution: {
         Args: { _institution_id: string; _manage?: boolean }
         Returns: boolean
       }
+      can_learn_course: { Args: { _course: string }; Returns: boolean }
+      can_manage_course: { Args: { _course: string }; Returns: boolean }
       complete_account_onboarding: { Args: never; Returns: undefined }
       get_user_permissions: {
         Args: { _institution_id?: string; _user_id: string }
@@ -1895,6 +1898,7 @@ export type Database = {
         Args: { _institution_id: string }
         Returns: undefined
       }
+      lesson_course: { Args: { _lesson: string }; Returns: string }
       list_active_company_summaries: { Args: never; Returns: Json }
       override_user_permission: {
         Args: {
@@ -1910,6 +1914,8 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      question_course: { Args: { _question: string }; Returns: string }
+      quiz_course: { Args: { _quiz: string }; Returns: string }
       revoke_user_role: {
         Args: {
           _actor_id: string
