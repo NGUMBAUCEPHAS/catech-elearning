@@ -1,10 +1,13 @@
 # Account setup
 
 ## Fresh Lovable Cloud connection
-- [ ] Use Cloud only; old records and accounts explicitly excluded by the user.
-- [ ] Repair public company discovery and verified-account onboarding.
-- [ ] Enforce trusted administrator checks and correct payment persistence.
-- [ ] Verify Cloud reads/writes and report external payment or email blockers.
+- [x] Use Cloud only; old records and accounts explicitly excluded by the user.
+- [x] Repair public company discovery and verified-account onboarding.
+- [x] Enforce trusted administrator checks and correct payment persistence.
+- [x] Verify Cloud reads/writes: student and company sign-in, membership, profile update/readback; 31 tests pass.
+- [ ] Verify live M-Pesa collection — blocked by missing Daraja credentials and callback configuration.
+- [ ] Verify real signup confirmation email — requires inbox verification by the user.
+- [ ] Grant the owner's super administrator access — requires the owner to create and verify a Cloud account.
 
 - [x] Enable account sign-in methods and create secure profiles and role storage.
 - [x] Add sign-in, password recovery, and private profile dashboard.
@@ -37,6 +40,6 @@ Retain the user's explicit exclusions: no demos, marketing homepage, or certific
 - [x] Integrate RBAC panel into Super Admin Console with role and permission management card.
 - [x] Enhance `getAccount` server function to fetch RBAC assigned roles and effective permissions alongside existing profile data.
 - [x] Create `PermissionGate` component and `usePermissionCheck` helper for client-side UI permission guards.
-- [ ] Apply migration `0004` to production Supabase database.
-- [ ] Wire `PermissionGate` into all existing dashboard components for granular UI access control.
-- [ ] End-to-end testing of RBAC enforcement across all 12 roles.
+- [x] Apply the source RBAC schema and functions to Lovable Cloud.
+- [x] Keep privileged platform actions server-gated and RBAC operations caller-authenticated.
+- [ ] End-to-end testing of RBAC enforcement across all 12 roles — requires appropriately provisioned real accounts.
