@@ -104,7 +104,12 @@ export const submitQuizAttemptFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     // 1. Fetch questions and options with is_correct on server side
-    const { data: questions, error } = await context.supabase
+    const { data: visibleQuiz, error: quizAccessError } = await context.supabase.from("quizzes").select("course_id,is_published").eq("id", data.quiz_id).single();
+    if (quizAccessError || !visibleQuiz || !visibleQuiz.is_published) throw new Error("Assessment is unavailable");
+    const { data: eligible } = await context.supabase.rpc("can_learn_course", { _course: visibleQuiz.course_id });
+    if (!eligible) throw new Error("Enroll before taking this assessment");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: questions, error } = await supabaseAdmin
       .from("quiz_questions" as never)
       .select("id, points, quiz_question_options(id, is_correct)" as never)
       .eq("quiz_id" as never, data.quiz_id);
@@ -142,7 +147,7 @@ export const submitQuizAttemptFn = createServerFn({ method: "POST" })
     const passed = percentage >= passScore;
 
     // Record attempt
-    const { data: attempt, error: attemptErr } = await context.supabase
+    const { data: attempt, error: attemptErr } = await supabaseAdmin
       .from("quiz_attempts" as never)
       .insert({
         quiz_id: data.quiz_id,
@@ -164,7 +169,7 @@ export const submitQuizAttemptFn = createServerFn({ method: "POST" })
       const year = new Date().getFullYear();
       certNumber = `CAT-${courseInfo.institution_id.slice(0, 4).toUpperCase()}-${year}-${uniqueSuffix}`;
 
-      await context.supabase.from("certificates" as never).upsert(
+      const { error: certificateError } = await supabaseAdmin.from("certificates" as never).upsert(
         {
           institution_id: courseInfo.institution_id,
           user_id: context.userId,
@@ -179,6 +184,7 @@ export const submitQuizAttemptFn = createServerFn({ method: "POST" })
         } as never,
         { onConflict: "user_id,course_id" },
       );
+      if (certificateError) throw new Error(certificateError.message);
     }
 
     return {
@@ -233,6 +239,11 @@ export const gradeAssignmentFn = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { data: submission } = await context.supabase.from("assignment_submissions").select("assignment_id,assignments(course_id,max_points)").eq("id", data.submission_id).single();
+    if (!submission?.assignments) throw new Error("Submission unavailable");
+    const { data: allowed } = await context.supabase.rpc("can_manage_course", { _course: submission.assignments.course_id });
+    if (!allowed) throw new Error("Assigned teacher or company administrator required");
+    if (data.grade > submission.assignments.max_points) throw new Error("Grade exceeds assignment points");
     const { error } = await context.supabase
       .from("assignment_submissions" as never)
       .update({

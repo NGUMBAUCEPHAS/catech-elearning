@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
@@ -39,17 +39,21 @@ import { CourseBuilderModal } from "@/components/dashboard/CourseBuilderModal";
 
 interface TeacherDashboardProps {
   displayName: string;
+  initialTab?: "grading" | "learners";
   institutionId?: string | undefined;
   onNavigateToMessages?: (studentId?: string) => void;
 }
 
 export function TeacherDashboard({
   displayName,
+  initialTab,
   institutionId,
   onNavigateToMessages,
 }: TeacherDashboardProps) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"overview" | "courses" | "grading" | "learners" | "notes">("overview");
+
+  useEffect(() => { if (initialTab) setActiveTab(initialTab); }, [initialTab]);
 
   // Modals
   const [builderOpen, setBuilderOpen] = useState(false);
@@ -91,14 +95,16 @@ export function TeacherDashboard({
 
   // Mutation: Grade submission
   const gradeMutation = useMutation({
-    mutationFn: () =>
-      gradeAssignmentFn({
+    mutationFn: () => {
+      if (!selectedSubmission) throw new Error("Select a submission");
+      return gradeAssignmentFn({
         data: {
-          submission_id: selectedSubmission!.id,
+          submission_id: selectedSubmission.id,
           grade: gradeScore,
           feedback: gradeFeedback,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["teacher-submissions"] });
       setGradingModalOpen(false);

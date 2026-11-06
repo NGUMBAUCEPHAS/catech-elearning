@@ -202,7 +202,7 @@ export const getCourseWithCurriculum = createServerFn({ method: "GET" })
       instructor_name: ((courseData["profiles"] as { display_name?: string } | null)?.display_name) || undefined,
       created_at: courseData["created_at"] as string,
       modules: formattedModules,
-      userEnrolled: Boolean(enrollRes.data),
+      userEnrolled: Boolean(enrollRes.data && (enrollRes.data as { status?: string }).status !== "suspended"),
     };
   });
 
@@ -338,12 +338,13 @@ export const enrollInFreeCourse = createServerFn({ method: "POST" })
     // Verify course is free
     const { data: course, error: courseErr } = await context.supabase
       .from("courses" as never)
-      .select("price")
+      .select("price,is_published")
       .eq("id", data.course_id)
       .single();
 
-    const courseRow = course as { price?: number | string } | null;
+    const courseRow = course as { price?: number | string; is_published?: boolean } | null;
     if (courseErr || !courseRow) throw new Error("Course not found");
+    if (!courseRow.is_published) throw new Error("Session is not published");
     if (Number(courseRow.price) > 0)
       throw new Error("Paid course requires M-Pesa transaction verification");
 

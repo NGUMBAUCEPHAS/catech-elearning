@@ -53,7 +53,7 @@ function Auth() {
   // Student Registration Fields
   const [studentName, setStudentName] = useState("");
   const [studentPhone, setStudentPhone] = useState("");
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>(DEFAULT_SEED_COMPANIES[0]?.id ?? "");
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
 
   // Company Registration Fields
   const [companyName, setCompanyName] = useState("");
@@ -100,7 +100,8 @@ function Auth() {
         setMessage("Password reset email sent. Please check your inbox.");
       } else if (mode === "signup_student") {
         // Register Student Account
-        const chosen = companies.find((c) => c.id === selectedCompanyId) || companies[0];
+        const chosen = companies.find((c) => c.id === selectedCompanyId);
+        if (!chosen) throw new Error("Select a company to join.");
 
         const result = await supabase.auth.signUp({
           email,
@@ -121,13 +122,7 @@ function Auth() {
 
         if (result.data.session) {
           if (chosen) {
-            try {
-              await associateStudentWithCompanyFn({
-                data: { institution_id: chosen.id },
-              });
-            } catch (assocErr) {
-              console.warn("Student company association notice:", assocErr);
-            }
+            await associateStudentWithCompanyFn({ data: { institution_id: chosen.id } });
 
             if (typeof window !== "undefined") {
               localStorage.setItem("catech_active_role", "student");
@@ -165,18 +160,7 @@ function Auth() {
         if (result.error) throw result.error;
 
         if (result.data.session) {
-          try {
-            await registerCompanyFn({
-              data: {
-                name: companyName,
-                code: formattedCode,
-                contact_email: adminEmail,
-                phone_number: companyPhone,
-              },
-            });
-          } catch (instErr) {
-            console.warn("Company registration notice:", instErr);
-          }
+          await registerCompanyFn({ data: { name: companyName, code: formattedCode, contact_email: adminEmail, phone_number: companyPhone } });
 
           if (typeof window !== "undefined") {
             localStorage.setItem("catech_active_role", "institution_admin");
@@ -190,18 +174,6 @@ function Auth() {
         const result = await supabase.auth.signInWithPassword({ email, password });
         if (result.error) throw result.error;
 
-        // Ensure default company selection for learners
-        if (typeof window !== "undefined") {
-          const defaultComp = companies[0] || DEFAULT_SEED_COMPANIES[0];
-          if (!localStorage.getItem("catech_selected_company") && defaultComp) {
-            localStorage.setItem(
-              "catech_selected_company",
-              JSON.stringify({ id: defaultComp.id, name: defaultComp.name, code: defaultComp.code }),
-            );
-            localStorage.setItem("catech_selected_company_id", defaultComp.id);
-          }
-        }
-
         await navigate({ to: "/dashboard" });
       }
     } catch (err) {
@@ -211,348 +183,28 @@ function Auth() {
     }
   }
 
+  const signup = mode === "signup_student" || mode === "signup_company";
+  const field = "w-full h-11 rounded-md border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring";
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-background">
-      <SiteNav />
-
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="bg-card border border-border/80 rounded-3xl shadow-xl p-6 sm:p-8 max-w-lg w-full">
-          {/* Header */}
-          <div className="flex items-center gap-3 pb-4 border-b border-border/70">
-            <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shadow-xs shrink-0">
-              <img src={logoImg} alt="CATECH" className="h-7 w-7 object-contain" />
-            </div>
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-wider text-primary">
-                CATECH LEARN · Commercial SaaS
-              </p>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
-                {mode === "signin" && "Sign In to Your Portal"}
-                {mode === "signup_student" && "Student Account Registration"}
-                {mode === "signup_company" && "Register Organization / Academy"}
-                {mode === "forgot" && "Reset Password"}
-              </h1>
-            </div>
-          </div>
-
-          {/* Mode Switcher Tabs */}
-          {mode !== "forgot" && (
-            <div className="mt-5 grid grid-cols-3 gap-1 p-1 bg-muted/60 rounded-xl border border-border/60 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => switchMode("signin")}
-                className={`py-2 px-1 rounded-lg transition-all text-center truncate ${
-                  mode === "signin"
-                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => switchMode("signup_student")}
-                className={`py-2 px-1 rounded-lg transition-all text-center truncate ${
-                  mode === "signup_student"
-                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                🎓 Student
-              </button>
-              <button
-                type="button"
-                onClick={() => switchMode("signup_company")}
-                className={`py-2 px-1 rounded-lg transition-all text-center truncate ${
-                  mode === "signup_company"
-                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                🏢 Company
-              </button>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={submit} className="mt-5 space-y-4">
-            {/* 1. Student Registration Fields */}
-            {mode === "signup_student" && (
-              <>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-foreground">Full Name</label>
-                  <input
-                    required
-                    maxLength={100}
-                    value={studentName}
-                    placeholder="e.g. Dennis Kimani"
-                    onChange={(e) => setStudentName(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-foreground">
-                    Phone Number (for Lipa na M-Pesa & SMS)
-                  </label>
-                  <input
-                    required
-                    value={studentPhone}
-                    placeholder="0712345678"
-                    onChange={(e) => setStudentPhone(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-foreground flex items-center justify-between">
-                    <span>Select Institution / Company to Join</span>
-                    <Badge variant="outline" className="text-[10px] font-mono text-primary">Required</Badge>
-                  </label>
-                  <select
-                    value={selectedCompanyId}
-                    onChange={(e) => setSelectedCompanyId(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-medium"
-                  >
-                    {companies.map((comp) => (
-                      <option key={comp.id} value={comp.id}>
-                        {comp.name} ({comp.code})
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-muted-foreground">
-                    You can browse other partner companies and enroll in their sessions anytime.
-                  </p>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-foreground">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    placeholder="student@example.com"
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* 2. Company Registration Fields */}
-            {mode === "signup_company" && (
-              <>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-foreground">
-                    Organization / Company Name
-                  </label>
-                  <input
-                    required
-                    maxLength={160}
-                    value={companyName}
-                    placeholder="e.g. Nairobi Software Academy, Apex Training Institute"
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-foreground">Company Code</label>
-                    <input
-                      required
-                      maxLength={20}
-                      value={companyCode}
-                      placeholder="e.g. APEX-TECH"
-                      onChange={(e) => setCompanyCode(e.target.value.toUpperCase())}
-                      className="w-full font-mono uppercase rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-foreground">
-                      Official Phone / M-Pesa
-                    </label>
-                    <input
-                      required
-                      value={companyPhone}
-                      placeholder="0712345678"
-                      onChange={(e) => setCompanyPhone(e.target.value)}
-                      className="w-full font-mono rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-foreground">
-                    Administrator Full Name
-                  </label>
-                  <input
-                    required
-                    maxLength={100}
-                    value={companyAdminName}
-                    placeholder="e.g. Dr. Catherine Njeri"
-                    onChange={(e) => setCompanyAdminName(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-foreground">
-                    Official Company Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={companyEmail}
-                    placeholder="admin@academy.co.ke"
-                    onChange={(e) => {
-                      setCompanyEmail(e.target.value);
-                      setEmail(e.target.value);
-                    }}
-                    className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* 3. Common Sign In / Forgot Email */}
-            {(mode === "signin" || mode === "forgot") && (
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-foreground">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  autoComplete="email"
-                  placeholder="name@example.com"
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-            )}
-
-            {/* Password Field (for signin, signup_student, signup_company) */}
-            {mode !== "forgot" && (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-semibold text-foreground">Password</label>
-                  {mode === "signin" && (
-                    <button
-                      type="button"
-                      onClick={() => switchMode("forgot")}
-                      className="text-[11px] font-semibold text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  )}
-                </div>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    minLength={8}
-                    value={password}
-                    autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                    placeholder="At least 8 characters"
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-card px-3.5 py-2.5 pr-10 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Messages & Errors */}
-            {error && (
-              <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
-                {error}
-              </div>
-            )}
-
-            {message && (
-              <div className="p-3 rounded-xl bg-emerald-600/10 border border-emerald-600/20 text-emerald-600 text-xs font-semibold">
-                {message}
-              </div>
-            )}
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={busy}
-              className="w-full bg-primary text-primary-foreground font-bold text-xs h-10 rounded-xl shadow-xs hover:bg-primary/95 transition-all"
-            >
-              {busy ? (
-                "Processing…"
-              ) : mode === "signin" ? (
-                "Sign In to Account"
-              ) : mode === "signup_student" ? (
-                "Create Student Account"
-              ) : mode === "signup_company" ? (
-                "Register Organization"
-              ) : (
-                "Send Reset Email"
-              )}
-            </Button>
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="flex h-20 items-center justify-between px-6 sm:px-10 border-b border-border bg-card"><div className="flex items-center gap-3"><img src={logoImg} alt="CATECH" className="h-10 w-10 object-contain"/><span className="text-xl font-bold">CATECH <span className="text-primary">Learn</span></span></div><span className="text-xs text-muted-foreground hidden sm:block">Your learning workspace</span></header>
+      <main className="flex-1 flex items-center justify-center px-5 py-10">
+        <div className="w-full max-w-md">
+          <div className="mb-8"><p className="text-primary text-sm font-semibold mb-3">CATECH Learn</p><h1 className="text-3xl font-semibold">{mode === "signin" ? "Welcome back" : mode === "forgot" ? "Reset your password" : mode === "signup_company" ? "Register your company" : "Create your account"}</h1><p className="text-sm text-muted-foreground mt-3">{mode === "signin" ? "Sign in to continue to your workspace." : mode === "forgot" ? "We’ll send you a password reset link." : "Start with your details below."}</p></div>
+          {mode !== "forgot" && <div className="flex border-b border-border mb-7" role="tablist" aria-label="Account type">{([['signin','Sign in'],['signup_student','Student'],['signup_company','Company']] as const).map(([id,label]) => <Button key={id} role="tab" aria-selected={mode===id} variant="ghost" onClick={() => switchMode(id)} className={`flex-1 rounded-none border-b-2 h-11 ${mode===id ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>{label}</Button>)}</div>}
+          <form onSubmit={submit} className="space-y-5">
+            {mode === "signup_student" && <><label className="block text-sm font-medium space-y-2"><span>Full name</span><input className={field} required maxLength={100} value={studentName} onChange={e=>setStudentName(e.target.value)} autoComplete="name"/></label><label className="block text-sm font-medium space-y-2"><span>Phone number</span><input className={field} required value={studentPhone} onChange={e=>setStudentPhone(e.target.value)} type="tel" autoComplete="tel" placeholder="0712345678"/></label><label className="block text-sm font-medium space-y-2"><span>Company or institution</span><select className={field} required value={selectedCompanyId} onChange={e=>setSelectedCompanyId(e.target.value)}><option value="">Select a company</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label></>}
+            {mode === "signup_company" && <><label className="block text-sm font-medium space-y-2"><span>Company name</span><input className={field} required maxLength={160} value={companyName} onChange={e=>setCompanyName(e.target.value)}/></label><div className="grid grid-cols-2 gap-4"><label className="block text-sm font-medium space-y-2"><span>Company code</span><input className={field} required maxLength={20} value={companyCode} onChange={e=>setCompanyCode(e.target.value.toUpperCase())} placeholder="CATECH"/></label><label className="block text-sm font-medium space-y-2"><span>Phone number</span><input className={field} required type="tel" value={companyPhone} onChange={e=>setCompanyPhone(e.target.value)}/></label></div><label className="block text-sm font-medium space-y-2"><span>Administrator name</span><input className={field} required value={companyAdminName} onChange={e=>setCompanyAdminName(e.target.value)} autoComplete="name"/></label></>}
+            <label className="block text-sm font-medium space-y-2"><span>Email address</span><input className={field} type="email" required value={mode === "signup_company" ? companyEmail : email} onChange={e=>{setEmail(e.target.value); if(mode==="signup_company")setCompanyEmail(e.target.value);}} autoComplete="email" placeholder="name@company.com"/></label>
+            {mode !== "forgot" && <div><div className="flex items-center justify-between mb-2"><label htmlFor="auth-password" className="text-sm font-medium">Password</label>{mode==="signin" && <Button type="button" variant="link" className="p-0 h-auto text-xs" onClick={()=>switchMode("forgot")}>Forgot password?</Button>}</div><div className="relative"><input id="auth-password" className={`${field} pr-12`} type={showPassword?"text":"password"} required minLength={8} value={password} onChange={e=>setPassword(e.target.value)} autoComplete={signup?"new-password":"current-password"}/><Button type="button" variant="ghost" size="icon" aria-label={showPassword?"Hide password":"Show password"} className="absolute right-1 top-1 h-9 w-9" onClick={()=>setShowPassword(!showPassword)}>{showPassword?<EyeOff className="h-4 w-4"/>:<Eye className="h-4 w-4"/>}</Button></div></div>}
+            {error && <p role="alert" className="text-sm text-destructive bg-destructive/10 rounded-md p-3">{error}</p>}
+            {message && <p role="status" className="text-sm text-primary bg-secondary rounded-md p-3">{message}</p>}
+            <Button type="submit" disabled={busy} className="w-full h-11 gap-2">{busy ? "Please wait…" : mode==="signin" ? "Sign in" : mode==="forgot" ? "Send reset link" : mode==="signup_company" ? "Register company" : "Create account"}<ArrowRight className="h-4 w-4"/></Button>
           </form>
-
-          {/* Footer Navigation */}
-          {mode === "forgot" ? (
-            <div className="mt-5 text-center">
-              <button
-                type="button"
-                onClick={() => switchMode("signin")}
-                className="text-xs font-semibold text-primary hover:underline"
-              >
-                ← Back to Sign In
-              </button>
-            </div>
-          ) : (
-            <div className="mt-5 text-center text-xs text-muted-foreground">
-              {mode === "signin" ? (
-                <p>
-                  Need an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => switchMode("signup_student")}
-                    className="text-primary font-bold hover:underline"
-                  >
-                    Register as Student
-                  </button>{" "}
-                  or{" "}
-                  <button
-                    type="button"
-                    onClick={() => switchMode("signup_company")}
-                    className="text-primary font-bold hover:underline"
-                  >
-                    Register Company
-                  </button>
-                </p>
-              ) : (
-                <p>
-                  Already registered?{" "}
-                  <button
-                    type="button"
-                    onClick={() => switchMode("signin")}
-                    className="text-primary font-bold hover:underline"
-                  >
-                    Sign In
-                  </button>
-                </p>
-              )}
-            </div>
-          )}
+          {mode==="forgot" && <Button variant="link" className="mt-4 px-0" onClick={()=>switchMode("signin")}>Back to sign in</Button>}
+          <p className="mt-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2"><ShieldCheck className="h-3.5 w-3.5"/>Secure account access</p>
         </div>
-      </main>
-
-      <SiteFooter />
+      </main><footer className="py-5 text-center text-xs text-muted-foreground border-t border-border">CATECH Learn</footer>
     </div>
   );
 }
