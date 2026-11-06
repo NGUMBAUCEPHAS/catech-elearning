@@ -70,20 +70,20 @@
   --font-body: "Manrope", sans-serif;
   --gradient-hero: linear-gradient(135deg, oklch(0.24 0.06 190), oklch(0.32 0.08 170));
   --shadow-card: 0 20px 40px -20px oklch(0.24 0.06 190 / 0.35);
-  --radius: 0.625rem;
-  --background: oklch(0.99 0 0);
+  --radius: 0.375rem;
+  --background: oklch(0.982 0.002 150);
   --foreground: oklch(0.18 0.01 240);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.01 240);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.01 240);
-  --primary: oklch(0.448 0.158 143.5); /* CATECH Brand Green #017020 */
+  --primary: oklch(0.472 0.142 146.5); /* CATECH Brand Green #017020 */
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.96 0.018 145);
   --secondary-foreground: oklch(0.25 0.08 145);
   --muted: oklch(0.96 0.005 240);
   --muted-foreground: oklch(0.48 0.02 240);
-  --accent: oklch(0.748 0.182 66.8); /* CATECH Brand Orange #FF9900 */
+  --accent: oklch(0.772 0.174 64.6); /* CATECH Brand Orange #FF9900 */
   --accent-foreground: oklch(0.15 0.03 60);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
@@ -103,8 +103,8 @@
   --sidebar-accent-foreground: oklch(0.2 0.07 145);
   --sidebar-border: oklch(0.91 0.01 240);
   --sidebar-ring: oklch(0.448 0.158 143.5);
-  --catech-green: #017020;
-  --catech-orange: #FF9900;
+  --catech-green: oklch(0.472 0.142 146.5);
+  --catech-orange: oklch(0.772 0.174 64.6);
 }
 
 .dark {
@@ -140,8 +140,8 @@
   --sidebar-accent-foreground: oklch(0.95 0.01 145);
   --sidebar-border: oklch(0.26 0.015 240);
   --sidebar-ring: oklch(0.58 0.17 143.5);
-  --catech-green: #017020;
-  --catech-orange: #FF9900;
+  --catech-green: oklch(0.472 0.142 146.5);
+  --catech-orange: oklch(0.772 0.174 64.6);
 }
 
 @layer base {
@@ -169,3 +169,12 @@
 @utility shadow-card {
   box-shadow: var(--shadow-card);
 }
+
+.portal-shell { letter-spacing: 0; }
+.portal-shell [class*="tracking-"] { letter-spacing: 0; }
+.portal-shell .admin-console > div > div:first-child { display: none; }
+.portal-shell .admin-console [role="tablist"] { display: none; }
+.portal-shell [class*="rounded-2xl"], .portal-shell [class*="rounded-3xl"], .portal-shell [class*="rounded-xl"] { border-radius: var(--radius); }
+.portal-shell [class*="shadow-"] { box-shadow: none; }
+.portal-shell table { min-width: 540px; }
+.portal-shell [class*="overflow-hidden"]:has(> table) { overflow-x: auto; }
