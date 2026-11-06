@@ -103,7 +103,7 @@ export function TeacherDashboard({
           grade: gradeScore,
           feedback: gradeFeedback,
         },
-      }),
+      });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["teacher-submissions"] });

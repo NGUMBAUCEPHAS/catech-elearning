@@ -54,7 +54,8 @@ export const initiateCoursePaymentFn = createServerFn({ method: "POST" })
     });
 
     // 3. Persist pending transaction
-    const { data: payment, error: payErr } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: payment, error: payErr } = await supabaseAdmin
       .from("payments" as never)
       .insert({
         institution_id: courseRow.institution_id,

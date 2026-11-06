@@ -121,8 +121,8 @@ export async function initiateStkPush(params: {
 }): Promise<StkPushResponse> {
   const shortcode = process.env["MPESA_BUSINESS_SHORTCODE"] || "174379";
   const passkey = process.env["MPESA_PASSKEY"];
-  const callbackUrl =
-    process.env["MPESA_CALLBACK_URL"] || "https://learn.catech.co.ke/api/payments/mpesa/callback";
+  const callbackUrl = process.env["MPESA_CALLBACK_URL"];
+  if (!callbackUrl || !callbackUrl.startsWith("https://")) throw new Error("M-Pesa callback URL must be configured before collecting payments.");
 
   if (!passkey) {
     throw new Error("MPESA_PASSKEY is not configured in server environment.");
@@ -199,7 +199,7 @@ export async function queryStkStatus(checkoutRequestId: string): Promise<StkQuer
     },
     body: JSON.stringify(payload),
   });
-
+  if (!response.ok) throw new Error(`M-Pesa verification failed [${response.status}]`);
   const data = await response.json();
   return data as StkQueryResponse;
 }
