@@ -173,14 +173,8 @@ export const updatePlatformUserRoleFn = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: allowed, error: accessError } = await context.supabase.rpc("is_platform_admin");
     if (accessError || !allowed) throw new Error("Platform administrator access required");
-    if (data.user_id === context.userId && data.role !== "super_admin") throw new Error("You cannot demote your own administrator account");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: deleteError } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
-    if (deleteError) throw new Error(deleteError.message);
-    const { error: roleError } = await supabaseAdmin.from("user_roles").insert({ user_id: data.user_id, role: data.role });
-    if (roleError) throw new Error(roleError.message);
-    const { error: auditError } = await supabaseAdmin.from("institution_audit_logs").insert({ actor_id: context.userId, action: "platform_user_role_updated", target_id: data.user_id, details: { assigned_role: data.role } });
-    if (auditError) throw new Error(auditError.message);
+    const { error } = await context.supabase.rpc("replace_platform_role", { _target: data.user_id, _role: data.role });
+    if (error) throw new Error(error.message);
 
     return { success: true, message: `User role successfully updated to ${data.role}.` };
   });
