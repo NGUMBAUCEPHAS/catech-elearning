@@ -1,0 +1,13 @@
+CREATE FUNCTION public.settle_verified_course_payment(_payment uuid,_description text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE p public.payments; BEGIN SELECT * INTO p FROM public.payments WHERE id=_payment FOR UPDATE; IF NOT FOUND THEN RAISE EXCEPTION 'Payment unavailable'; END IF; UPDATE public.payments SET status='completed',result_code=0,result_desc=left(_description,1000),updated_at=now() WHERE id=p.id; IF p.course_id IS NOT NULL THEN INSERT INTO public.enrollments(course_id,user_id,status,payment_id) VALUES(p.course_id,p.user_id,'active',p.id) ON CONFLICT(course_id,user_id) DO UPDATE SET status='active',payment_id=EXCLUDED.payment_id; END IF; IF p.status <> 'completed' THEN INSERT INTO public.institution_audit_logs(institution_id,action,target_id,details) VALUES(p.institution_id,'payment_confirmed',p.id,jsonb_build_object('source','provider_verification')); END IF; END; $$;
+REVOKE ALL ON FUNCTION public.settle_verified_course_payment(uuid,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.settle_verified_course_payment(uuid,text) TO service_role;
+DROP POLICY "Peer company names" ON public.profiles;
+DROP POLICY "Department access" ON public.departments;
+CREATE POLICY "Department read" ON public.departments FOR SELECT TO authenticated USING(public.can_access_institution(institution_id,false));
+CREATE POLICY "Department manage" ON public.departments FOR ALL TO authenticated USING(public.can_access_institution(institution_id,true)) WITH CHECK(public.can_access_institution(institution_id,true));
+DROP POLICY "Academic year access" ON public.academic_years;
+CREATE POLICY "Academic year read" ON public.academic_years FOR SELECT TO authenticated USING(public.can_access_institution(institution_id,false));
+CREATE POLICY "Academic year manage" ON public.academic_years FOR ALL TO authenticated USING(public.can_access_institution(institution_id,true)) WITH CHECK(public.can_access_institution(institution_id,true));
+DROP POLICY "Class access" ON public.classes;
+CREATE POLICY "Class read" ON public.classes FOR SELECT TO authenticated USING(public.can_access_institution(institution_id,false));
+CREATE POLICY "Class manage" ON public.classes FOR ALL TO authenticated USING(public.can_access_institution(institution_id,true)) WITH CHECK(public.can_access_institution(institution_id,true));

@@ -1935,6 +1935,10 @@ export type Database = {
         }
         Returns: string
       }
+      settle_verified_course_payment: {
+        Args: { _description: string; _payment: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "super_admin" | "institution_admin" | "teacher" | "student"
