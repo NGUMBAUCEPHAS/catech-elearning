@@ -64,6 +64,13 @@
       "when": 1794040622233,
       "tag": "0008_atomic_verified_payment_settlement",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794040700208,
+      "tag": "0009_managed_account_status",
+      "breakpoints": true
     }
   ]
 }

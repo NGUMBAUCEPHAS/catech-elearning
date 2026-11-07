@@ -52,6 +52,32 @@ export type Database = {
           },
         ]
       }
+      account_status: {
+        Row: {
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_status_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           author_id: string
@@ -1839,6 +1865,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_is_active: { Args: never; Returns: boolean }
       assign_institution_member: {
         Args: {
           _active?: boolean
