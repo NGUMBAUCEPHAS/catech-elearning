@@ -787,6 +787,7 @@ export type Database = {
           id: string
           name: string
           phone_number: string | null
+          require_member_approval: boolean
           status: string
           updated_at: string
         }
@@ -800,6 +801,7 @@ export type Database = {
           id?: string
           name: string
           phone_number?: string | null
+          require_member_approval?: boolean
           status?: string
           updated_at?: string
         }
@@ -813,6 +815,7 @@ export type Database = {
           id?: string
           name?: string
           phone_number?: string | null
+          require_member_approval?: boolean
           status?: string
           updated_at?: string
         }
@@ -1943,6 +1946,13 @@ export type Database = {
       }
       question_course: { Args: { _question: string }; Returns: string }
       quiz_course: { Args: { _quiz: string }; Returns: string }
+      replace_platform_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _target: string
+        }
+        Returns: undefined
+      }
       revoke_user_role: {
         Args: {
           _actor_id: string
@@ -1961,6 +1971,10 @@ export type Database = {
           _status?: string
         }
         Returns: string
+      }
+      set_company_join_approval: {
+        Args: { _institution: string; _required: boolean }
+        Returns: undefined
       }
       settle_verified_course_payment: {
         Args: { _description: string; _payment: string }

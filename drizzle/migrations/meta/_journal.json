@@ -71,6 +71,13 @@
       "when": 1794040700208,
       "tag": "0009_managed_account_status",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794040966649,
+      "tag": "0010_atomic_admin_roles_and_active_guards",
+      "breakpoints": true
     }
   ]
 }
