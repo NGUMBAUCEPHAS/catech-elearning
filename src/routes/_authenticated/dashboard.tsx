@@ -20,6 +20,7 @@ import { SuperAdminConsole } from "@/components/dashboard/SuperAdminConsole";
 import { RbacManagementPanel } from "@/components/dashboard/RbacManagementPanel";
 import { IssueReporter } from "@/components/dashboard/IssueReporter";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
+import { ManagedAccounts } from "@/components/dashboard/ManagedAccounts";
 import { SubscriptionPanel } from "@/components/dashboard/SubscriptionPanel";
 const accountOptions = queryOptions({ queryKey: ["account"], queryFn: () => getAccount() });
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -40,7 +41,8 @@ function Dashboard() {
     <main className="px-5 sm:px-8 xl:px-10 py-8 max-w-[1440px] mx-auto">
     {course?<CourseLearningPlayer courseId={course} onBack={()=>setCourse(null)}/>:<>
     {authorizedView==="overview"&&<PortalOverview role={role} name={data.profile.display_name} onNavigate={navigate} onLearn={setCourse}/>}
-    {admin && ["companies","users","courses","payments","audit","issues","settings"].includes(authorizedView)&&<div className="admin-console"><SuperAdminConsole key={authorizedView} initialTab={authorizedView as "companies"|"users"|"courses"|"payments"|"audit"|"issues"|"settings"}/></div>}
+    {admin && ["companies","courses","payments","audit","issues","settings"].includes(authorizedView)&&<div className="admin-console"><SuperAdminConsole key={authorizedView} initialTab={authorizedView as "companies"|"users"|"courses"|"payments"|"audit"|"issues"|"settings"}/></div>}
+    {authorizedView==="users"&&admin&&<ManagedAccounts/>}
     {authorizedView==="subscriptions"&&admin&&<SubscriptionPanel/>}
     {authorizedView==="rbac_management"&&admin&&<RbacManagementPanel/>}
     {authorizedView==="companies"&&role==="student"&&<CompanyDirectory selectedCompanyId={company?.id??null} onSelectCompany={c=>{setBrowseCompany(c);setView("sessions");}} onExploreCourses={()=>setView("sessions")}/>}
