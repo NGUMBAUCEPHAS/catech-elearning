@@ -5,6 +5,8 @@ import { z } from "zod";
 export const getAccount = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { data: active } = await context.supabase.rpc("account_is_active");
+    if (!active) throw new Error("Your account is suspended. Contact the platform administrator.");
     const { error: onboardingError } = await context.supabase.rpc("complete_account_onboarding");
     if (onboardingError) throw new Error(onboardingError.message);
     const [profile, roles, memberships] = await Promise.all([

@@ -110,31 +110,9 @@ export const verifyPaymentAndEnrollFn = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
       if (queryResult.ResultCode === "0") {
-        // Success: Update payment and create enrollment
-        const { error: updateError } = await supabaseAdmin
-          .from("payments" as never)
-          .update({
-            status: "completed",
-            result_code: 0,
-            result_desc: queryResult.ResultDesc,
-            updated_at: new Date().toISOString(),
-          } as never)
-          .eq("id", paymentRow["id"] as string);
-        if (updateError) throw new Error(updateError.message);
-
-        if (paymentRow["course_id"]) {
-          const { error: enrollmentError } = await supabaseAdmin.from("enrollments" as never).upsert(
-            {
-              course_id: paymentRow["course_id"],
-              user_id: paymentRow["user_id"],
-              status: "active",
-              payment_id: paymentRow["id"],
-              enrolled_at: new Date().toISOString(),
-            } as never,
-            { onConflict: "course_id,user_id" },
-          );
-          if (enrollmentError) throw new Error(enrollmentError.message);
-        }
+        if (queryResult.CheckoutRequestID !== data.checkout_request_id || queryResult.MerchantRequestID !== paymentRow["merchant_request_id"]) throw new Error("Payment reference mismatch");
+        const { error: settlementError } = await supabaseAdmin.rpc("settle_verified_course_payment", { _payment: paymentRow["id"] as string, _description: queryResult.ResultDesc });
+        if (settlementError) throw new Error(settlementError.message);
 
         return { completed: true, message: "Payment confirmed! You are now enrolled." };
       } else if (queryResult.ResultCode === "1032") {

@@ -57,6 +57,27 @@
       "when": 1793869547094,
       "tag": "0007_secure_role_learning_boundaries",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794040622233,
+      "tag": "0008_atomic_verified_payment_settlement",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794040700208,
+      "tag": "0009_managed_account_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794040966649,
+      "tag": "0010_atomic_admin_roles_and_active_guards",
+      "breakpoints": true
     }
   ]
 }

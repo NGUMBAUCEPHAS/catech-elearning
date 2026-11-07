@@ -19,6 +19,7 @@ import {
   updateLessonProgressFn,
   type LessonItem,
 } from "@/lib/course.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { QuizPlayerModal } from "@/components/dashboard/QuizPlayerModal";
 
 interface CourseLearningPlayerProps {
@@ -37,6 +38,7 @@ export function CourseLearningPlayer({ courseId, onBack }: CourseLearningPlayerP
     queryFn: () => getCourseWithCurriculum({ data: { course_id: courseId } }),
   });
 
+  const { data: quizzes = [] } = useQuery({ queryKey: ["course-quizzes", courseId], queryFn: async () => { const { data, error } = await supabase.from("quizzes").select("id,title").eq("course_id",courseId).eq("is_published",true); if(error)throw new Error(error.message); return data??[]; } });
   const progressMutation = useMutation({
     mutationFn: (lessonId: string) =>
       updateLessonProgressFn({
@@ -105,10 +107,11 @@ export function CourseLearningPlayer({ courseId, onBack }: CourseLearningPlayerP
 
         <div className="flex items-center gap-3">
           <Button
+            disabled={quizzes.length===0}
             onClick={() => setQuizModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-xs"
           >
-            <Award className="h-4 w-4 mr-1.5" /> Take Final Exam & Earn Certificate
+            <Award className="h-4 w-4 mr-1.5" /> Take assessment
           </Button>
         </div>
       </div>
@@ -196,8 +199,9 @@ export function CourseLearningPlayer({ courseId, onBack }: CourseLearningPlayerP
                   ) : (
                     <Button
                       size="sm"
-                      onClick={() => setQuizModalOpen(true)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      disabled={quizzes.length===0}
+            onClick={() => setQuizModalOpen(true)}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       <Award className="h-4 w-4 mr-1.5" /> Complete Course & Take Exam
                     </Button>
@@ -265,7 +269,7 @@ export function CourseLearningPlayer({ courseId, onBack }: CourseLearningPlayerP
       <QuizPlayerModal
         open={quizModalOpen}
         onOpenChange={setQuizModalOpen}
-        quizId={course.id}
+        quizId={quizzes[0]?.id ?? ""}
         courseTitle={course.title}
         onPassed={(certNumber) => {
           if (certNumber) setEarnedCert(certNumber);

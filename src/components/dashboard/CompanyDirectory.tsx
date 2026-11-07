@@ -46,60 +46,7 @@ export function CompanyDirectory({
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/15 via-primary/5 to-background border border-border/80 p-6 sm:p-8">
-        <div className="max-w-2xl">
-          <Badge className="bg-primary/20 text-primary border-primary/30 mb-2 font-semibold">
-            <Building2 className="h-3 w-3 mr-1" /> Partner Institutions & Academies
-          </Badge>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            Select Your Learning Institution
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            Browse verified corporate trainers, universities, and technical companies offering accredited
-            sessions. Select an institution to view their courses, enroll via M-Pesa, and start learning.
-          </p>
-        </div>
-
-        {/* Search Bar & Quick Company Shortcuts */}
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 max-w-xl">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search companies by name, code or keyword..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-input bg-card/80 pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all backdrop-blur"
-            />
-          </div>
-        </div>
-
-        {/* Quick Company Filter Badges */}
-        <div className="mt-4 flex flex-wrap gap-2 items-center text-xs">
-          <span className="text-muted-foreground font-semibold text-[11px]">Featured:</span>
-          {[
-            { label: "All Companies", query: "" },
-            { label: "🏢 Altocom", query: "Altocom" },
-            { label: "⚡ Midian", query: "Midian" },
-            { label: "💻 iTech", query: "iTech" },
-            { label: "🎓 Catech", query: "Catech" },
-          ].map((item) => (
-            <button
-              key={item.label}
-              onClick={() => setSearch(item.query)}
-              className={`rounded-xl px-2.5 py-1 text-xs font-semibold transition-all border ${
-                (item.query === "" && search === "") || (item.query !== "" && search.toLowerCase().includes(item.query.toLowerCase()))
-                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                  : "bg-card/70 hover:bg-muted text-muted-foreground hover:text-foreground border-border/80"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
+      <div className="flex flex-wrap justify-between items-center gap-4"><h2 className="text-xl font-semibold">Discover companies</h2><div className="relative w-full sm:w-80"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground"/><input aria-label="Search companies" placeholder="Search companies…" value={search} onChange={e=>setSearch(e.target.value)} className="w-full h-10 rounded-md border border-input bg-card pl-9 pr-3 text-sm focus:ring-2 focus:ring-ring outline-none"/></div></div>
       {/* Directory Grid */}
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -152,7 +99,7 @@ export function CompanyDirectory({
                     </div>
                     {isSelected && (
                       <Badge className="bg-primary text-primary-foreground font-semibold text-[10px]">
-                        <CheckCircle2 className="h-3 w-3 mr-1" /> Active
+                        <CheckCircle2 className="h-3 w-3 mr-1" /> Selected
                       </Badge>
                     )}
                   </div>
@@ -168,7 +115,7 @@ export function CompanyDirectory({
                   <div className="space-y-1.5 pt-1">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Mail className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
-                      <span className="truncate">{company.contact_email || "contact@institution.ke"}</span>
+                      <span className="truncate">{company.contact_email || "—"}</span>
                     </div>
 
                     {company.phone_number && (
@@ -188,17 +135,11 @@ export function CompanyDirectory({
                     <div className="flex items-center gap-2 text-muted-foreground pt-1">
                       <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span className="font-semibold text-foreground">
-                        {company.course_count ?? 1} Published Session{company.course_count !== 1 ? "s" : ""}
+                        {company.course_count ?? 0} Published Session{company.course_count !== 1 ? "s" : ""}
                       </span>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span className="flex items-center gap-1 font-semibold text-foreground">
-                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Verified Partner
-                    </span>
-                    <span className="text-emerald-600 font-bold">Lipa na M-Pesa Ready</span>
-                  </div>
                 </CardContent>
 
                 <CardFooter className="pt-3 border-t border-border/70 flex gap-2">
@@ -217,7 +158,7 @@ export function CompanyDirectory({
                       className="w-full border-primary/40 hover:bg-primary hover:text-primary-foreground text-xs font-semibold"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-primary" />
-                      Select Company
+                      Browse sessions
                     </Button>
                   )}
                 </CardFooter>

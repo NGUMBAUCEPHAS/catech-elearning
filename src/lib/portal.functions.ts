@@ -12,7 +12,12 @@ export const getPortalOverview = createServerFn({ method: "GET" }).middleware([r
     context.supabase.from("institution_audit_logs").select("id,action,created_at").order("created_at", { ascending: false }).limit(6),
   ]);
   for (const r of [courses, enrollments, payments, progress, submissions, activity]) if (r.error) throw new Error(r.error.message);
-  return { courses: courses.data ?? [], enrollments: enrollments.data ?? [], payments: payments.data ?? [], progress: progress.data ?? [], submissions: submissions.data ?? [], activity: activity.data ?? [] };
+  const { data: memberships } = await context.supabase.from("institution_memberships").select("role,active,institution_id").eq("user_id",context.userId);
+  const { data: platform } = await context.supabase.rpc("is_platform_admin");
+  const teacher = !platform && !memberships?.some(m=>m.active&&m.role==="institution_admin") && memberships?.some(m=>m.active&&m.role==="teacher");
+  const managed = memberships?.filter(m=>m.active&&m.role==="institution_admin").map(m=>m.institution_id)??[];
+  const scopedCourses = (courses.data??[]).filter(c=>platform || (teacher ? c.instructor_id===context.userId : managed.length ? managed.includes(c.institution_id) : true));
+  return { courses: scopedCourses, enrollments: enrollments.data ?? [], payments: payments.data ?? [], progress: progress.data ?? [], submissions: submissions.data ?? [], activity: activity.data ?? [] };
 });
 export const listScopedPayments = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data, error } = await context.supabase.from("payments").select("id,amount,currency,status,phone_number,mpesa_receipt_number,created_at,courses(title)").order("created_at", { ascending: false });
@@ -32,3 +37,5 @@ export const saveCompanyMember = createServerFn({ method: "POST" }).middleware([
   const { error } = await context.supabase.rpc("assign_institution_member", { _institution_id: data.institution_id, _user_id: data.user_id, _role: data.role, _active: data.active });
   if (error) throw new Error(error.message); return { success: true };
 });
+export const getJoinApproval = createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({institution_id:z.string().uuid()}).parse(i)).handler(async({data,context})=>{const{data:row,error}=await context.supabase.from("institutions").select("require_member_approval").eq("id",data.institution_id).single();if(error)throw new Error(error.message);return row.require_member_approval;});
+export const setJoinApproval = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({institution_id:z.string().uuid(),required:z.boolean()}).parse(i)).handler(async({data,context})=>{const{error}=await context.supabase.rpc("set_company_join_approval",{_institution:data.institution_id,_required:data.required});if(error)throw new Error(error.message);return{success:true};});

@@ -246,7 +246,7 @@ export const getCompanyLearnersDirectory = createServerFn({ method: "GET" })
     // 3. Fetch user profiles
     const { data: profiles = [] } = await context.supabase
       .from("profiles")
-      .select("id, display_name, avatar_url, created_at")
+      .select("id, display_name, avatar_url, created_at, phone_number")
       .in("id", userIds);
 
     // 4. Fetch payments to get phone numbers for students
@@ -309,8 +309,11 @@ export const getCompanyLearnersDirectory = createServerFn({ method: "GET" })
       submissionCounts.set(s.user_id, (submissionCounts.get(s.user_id) || 0) + 1);
     }
 
+    const { data: attempts } = await context.supabase.from("quiz_attempts").select("user_id,score").in("user_id", userIds);
+    const quizAverages = new Map<string, number>();
+    for (const id of userIds) { const scores=(attempts??[]).filter(a=>a.user_id===id); if(scores.length)quizAverages.set(id,Math.round(scores.reduce((n,a)=>n+Number(a.score),0)/scores.length)); }
     // Build learner records
-    return (profiles as unknown as Array<{ id: string; display_name: string | null; avatar_url: string | null; created_at: string }>).map((p) => {
+    return (profiles as unknown as Array<{ id: string; display_name: string | null; avatar_url: string | null; created_at: string; phone_number: string | null }>).map((p) => {
       const userEnrollments = enrollments.filter((e) => e.user_id === p.id);
       const completed = userCompletedLessons.get(p.id) || 0;
       const progressPct =
@@ -319,7 +322,7 @@ export const getCompanyLearnersDirectory = createServerFn({ method: "GET" })
       return {
         userId: p.id,
         displayName: p.display_name || "Scholar",
-        phoneNumber: phoneMap.get(p.id) || "N/A",
+        phoneNumber: p.phone_number || phoneMap.get(p.id) || "—",
         avatarUrl: p.avatar_url,
         enrolledCourses: userEnrollments.map((ue) => ({
           courseId: ue.course_id,
@@ -330,7 +333,7 @@ export const getCompanyLearnersDirectory = createServerFn({ method: "GET" })
         progressPercentage: progressPct,
         completedLessons: completed,
         totalLessons: totalLessonsCount,
-        quizScoreAverage: 85, // Default benchmark
+        quizScoreAverage: quizAverages.get(p.id) ?? 0,
         assignmentsSubmitted: submissionCounts.get(p.id) || 0,
         lastActive: p.created_at,
       };

@@ -69,6 +69,9 @@ export const listCourses = createServerFn({ method: "GET" })
         .parse(input) || {},
   )
   .handler(async ({ data, context }): Promise<CourseSummary[]> => {
+    const { data: ownRoles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const { data: ownMemberships } = await context.supabase.from("institution_memberships").select("role,active").eq("user_id", context.userId);
+    const teacherOnly = !ownRoles?.some(r=>r.role==="super_admin") && !ownMemberships?.some(m=>m.active&&m.role==="institution_admin") && (ownRoles?.some(r=>r.role==="teacher") || ownMemberships?.some(m=>m.active&&m.role==="teacher"));
     let query = context.supabase
       .from("courses" as never)
       .select(
@@ -76,6 +79,7 @@ export const listCourses = createServerFn({ method: "GET" })
       )
       .order("created_at", { ascending: false });
 
+    if (teacherOnly) query = query.eq("instructor_id", context.userId);
     if (data?.institution_id) {
       query = query.eq("institution_id", data.institution_id);
     }
