@@ -15,3 +15,5 @@
 - M-Pesa (Daraja) payments run server-side in `src/lib/mpesa.server.ts`; credentials come from server secrets only.
 - Public company discovery uses a read-only database projection; verified onboarding uses transactional RPCs so existing companies cannot be claimed through signup.
 - All platform administration handlers verify the caller through the authenticated role RPC before privileged operations; RBAC RPCs use the authenticated client to preserve caller identity.
+- Workspace selection comes from authenticated active memberships, never browser role preferences; shared panels reuse existing tools with RLS-scoped data.
+- Daraja callback payloads are untrusted hints: requery the provider and match checkout/merchant IDs before an atomic service-only settlement RPC.
