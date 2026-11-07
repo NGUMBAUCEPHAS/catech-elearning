@@ -27,53 +27,14 @@ export const sendDirectMessageFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => sendMessageSchema.parse(input))
   .handler(async ({ data, context }) => {
-    // 1. Fetch sender profile display name
-    const { data: sender } = await context.supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", context.userId)
-      .single();
+    const { data: inserted, error } = await context.supabase.from("direct_messages").insert({ institution_id: data.institution_id ?? null, sender_id: context.userId, recipient_id: data.recipient_id, subject: data.subject, message: data.message }).select("id").single();
+    if (error) throw new Error(error.message);
+    // Recipient notifications are privileged only after the tenant-scoped message insert succeeded.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: noticeError } = await supabaseAdmin.from("notifications").insert({ user_id: data.recipient_id, title: data.subject, message: data.message, link: "/dashboard", is_read: false });
+    if (noticeError) throw new Error(noticeError.message);
+    return { success: true, messageId: inserted.id, sentAt: new Date().toISOString() };
 
-    const senderName = sender?.display_name || "Instructor / Academy";
-
-    let messageId = "";
-
-    // 2. Try inserting into direct_messages table
-    try {
-      const { data: inserted, error: msgErr } = await context.supabase
-        .from("direct_messages" as never)
-        .insert({
-          institution_id: data.institution_id || null,
-          sender_id: context.userId,
-          recipient_id: data.recipient_id,
-          subject: data.subject,
-          message: data.message,
-          is_read: false,
-        } as never)
-        .select("id" as never)
-        .single();
-
-      if (!msgErr && inserted) {
-        messageId = (inserted as { id: string }).id;
-      }
-    } catch {
-      // Table may not yet be migrated
-    }
-
-    // 3. Insert notification for recipient so it's always received
-    await context.supabase.from("notifications" as never).insert({
-      user_id: data.recipient_id,
-      title: `Message from ${senderName}: ${data.subject || "Academic Update"}`,
-      message: data.message,
-      link: "/dashboard?tab=messages",
-      is_read: false,
-    } as never);
-
-    return {
-      success: true,
-      messageId,
-      sentAt: new Date().toISOString(),
-    };
   });
 
 // 2. List Direct Messages for the logged-in user

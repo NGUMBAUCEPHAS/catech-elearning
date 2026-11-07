@@ -12,7 +12,12 @@ export const getPortalOverview = createServerFn({ method: "GET" }).middleware([r
     context.supabase.from("institution_audit_logs").select("id,action,created_at").order("created_at", { ascending: false }).limit(6),
   ]);
   for (const r of [courses, enrollments, payments, progress, submissions, activity]) if (r.error) throw new Error(r.error.message);
-  return { courses: courses.data ?? [], enrollments: enrollments.data ?? [], payments: payments.data ?? [], progress: progress.data ?? [], submissions: submissions.data ?? [], activity: activity.data ?? [] };
+  const { data: memberships } = await context.supabase.from("institution_memberships").select("role,active,institution_id").eq("user_id",context.userId);
+  const { data: platform } = await context.supabase.rpc("is_platform_admin");
+  const teacher = !platform && !memberships?.some(m=>m.active&&m.role==="institution_admin") && memberships?.some(m=>m.active&&m.role==="teacher");
+  const managed = memberships?.filter(m=>m.active&&m.role==="institution_admin").map(m=>m.institution_id)??[];
+  const scopedCourses = (courses.data??[]).filter(c=>platform || (teacher ? c.instructor_id===context.userId : managed.length ? managed.includes(c.institution_id) : true));
+  return { courses: scopedCourses, enrollments: enrollments.data ?? [], payments: payments.data ?? [], progress: progress.data ?? [], submissions: submissions.data ?? [], activity: activity.data ?? [] };
 });
 export const listScopedPayments = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data, error } = await context.supabase.from("payments").select("id,amount,currency,status,phone_number,mpesa_receipt_number,created_at,courses(title)").order("created_at", { ascending: false });
