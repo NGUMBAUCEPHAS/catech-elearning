@@ -17,3 +17,4 @@
 - All platform administration handlers verify the caller through the authenticated role RPC before privileged operations; RBAC RPCs use the authenticated client to preserve caller identity.
 - Workspace selection comes from authenticated active memberships, never browser role preferences; shared panels reuse existing tools with RLS-scoped data.
 - Daraja callback payloads are untrusted hints: requery the provider and match checkout/merchant IDs before an atomic service-only settlement RPC.
+- Lesson RLS resolves access through the row's module_id, not a lookup of its new id, so INSERT RETURNING can read back newly created lessons safely.
