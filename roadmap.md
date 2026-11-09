@@ -1,7 +1,7 @@
 # Account setup
 
 ## M-Pesa sandbox setup
-- [ ] Configure sandbox credentials securely — replacement Daraja consumer credentials and passkey required.
+- [x] Configure sandbox mode, business shortcode, and securely saved Daraja consumer credentials and passkey.
 - [ ] Verify sandbox checkout and confirmed learning access — requires a published callback URL.
 
 ## Commercial redesign and system update
