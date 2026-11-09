@@ -173,6 +173,7 @@
 .portal-shell { letter-spacing: 0; }
 .portal-shell [class*="tracking-"] { letter-spacing: 0; }
 .portal-shell .admin-console > div > div:first-child { display: none; }
+.portal-shell .admin-console > div > div:nth-child(2) { display: none; }
 .portal-shell .admin-console [role="tablist"] { display: none; }
 .portal-shell [class*="rounded-2xl"], .portal-shell [class*="rounded-3xl"], .portal-shell [class*="rounded-xl"] { border-radius: var(--radius); }
 .portal-shell [class*="shadow-"] { box-shadow: none; }
