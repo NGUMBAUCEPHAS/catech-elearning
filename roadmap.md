@@ -1,5 +1,9 @@
 # Account setup
 
+## M-Pesa sandbox setup
+- [ ] Configure sandbox credentials securely — replacement Daraja consumer credentials and passkey required.
+- [ ] Verify sandbox checkout and confirmed learning access — requires a published callback URL.
+
 ## Commercial redesign and system update
 - [x] Redesign authentication and role-specific dashboard shell with accessible sidebar/drawer.
 - [x] Reuse learning, grading, company and admin tools; show real scoped statistics and tables.
