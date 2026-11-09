@@ -42,6 +42,7 @@ export interface ModuleItem {
 export interface CourseDetail extends CourseSummary {
   modules: ModuleItem[];
   userEnrolled: boolean;
+  materials: Array<{ id: string; lesson_id: string; title: string; file_url: string }>;
 }
 
 const saveCourseSchema = z.object({
@@ -191,6 +192,9 @@ export const getCourseWithCurriculum = createServerFn({ method: "GET" })
         })),
     }));
 
+    const lessonIds = formattedModules.flatMap(m => m.lessons.map(l => l.id));
+    const { data: materials, error: materialError } = lessonIds.length ? await context.supabase.from("learning_materials").select("id,lesson_id,title,file_url").in("lesson_id",lessonIds) : { data: [], error: null };
+    if (materialError) throw new Error(materialError.message);
     return {
       id: courseData["id"] as string,
       institution_id: courseData["institution_id"] as string,
@@ -206,6 +210,7 @@ export const getCourseWithCurriculum = createServerFn({ method: "GET" })
       instructor_name: ((courseData["profiles"] as { display_name?: string } | null)?.display_name) || undefined,
       created_at: courseData["created_at"] as string,
       modules: formattedModules,
+      materials: materials ?? [],
       userEnrolled: Boolean(enrollRes.data && (enrollRes.data as { status?: string }).status !== "suspended"),
     };
   });

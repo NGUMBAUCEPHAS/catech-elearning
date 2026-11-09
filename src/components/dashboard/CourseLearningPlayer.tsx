@@ -176,6 +176,7 @@ export function CourseLearningPlayer({ courseId, onBack }: CourseLearningPlayerP
                     "Welcome to this lesson module. Watch the instructional presentation above and review syllabus materials."}
                 </div>
 
+                {course.materials.filter(m=>m.lesson_id===currentLesson.id).length>0 && <section className="border-t border-border pt-4"><h4 className="text-sm font-semibold mb-3">Materials</h4>{course.materials.filter(m=>m.lesson_id===currentLesson.id).map(m=><Button key={m.id} asChild variant="link" className="px-0 mr-4"><a href={m.file_url} target="_blank" rel="noreferrer"><FileText className="h-4 w-4 mr-2"/>{m.title}<ExternalLink className="h-3 w-3 ml-2"/></a></Button>)}</section>}
                 {/* Lesson Actions */}
                 <div className="flex items-center justify-between border-t border-border/60 pt-4">
                   <Button
