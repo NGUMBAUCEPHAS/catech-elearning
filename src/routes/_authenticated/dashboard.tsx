@@ -13,6 +13,7 @@ import { CompanyLearnersManager } from "@/components/dashboard/CompanyLearnersMa
 import { CompanyProfileEditor } from "@/components/dashboard/CompanyProfileEditor";
 import { StudentProfileEditor } from "@/components/dashboard/StudentProfileEditor";
 import { DirectMessagingHub } from "@/components/dashboard/DirectMessagingHub";
+import { CurriculumEditor } from "@/components/dashboard/CurriculumEditor";
 import { CourseLearningPlayer } from "@/components/dashboard/CourseLearningPlayer";
 import { TeacherDashboard } from "@/components/dashboard/TeacherDashboard";
 import { CampusAcademicManager } from "@/components/dashboard/CampusAcademicManager";
@@ -39,7 +40,7 @@ function Dashboard() {
   const admin=role==="super_admin";
   return <div className="portal-shell min-h-screen bg-background flex"><DashboardSidebar activeView={authorizedView} onViewChange={navigate} userRole={role} selectedCompany={company} displayName={data.profile.display_name} mobileOpen={mobile} onMobileOpenChange={setMobile}/><div className="flex-1 min-w-0"><header className="h-20 sticky top-0 z-20 bg-card border-b border-border flex items-center justify-between px-5 sm:px-8 gap-3"><div className="flex items-center gap-3 min-w-0"><Button aria-label="Open navigation" variant="ghost" size="icon" className="md:hidden" onClick={()=>setMobile(true)}><Menu className="h-5 w-5"/></Button><div><p className="text-xs text-muted-foreground mb-1">{roleLabels[role]}</p><h1 className="text-lg font-semibold">{title}</h1></div></div><div className="flex items-center gap-4"><NotificationBell onNavigate={navigate}/><div className="h-8 border-l border-border"/><span className="h-9 w-9 rounded-full bg-secondary text-primary font-semibold flex items-center justify-center">{data.profile.display_name.charAt(0)||"C"}</span><span className="text-sm font-medium hidden lg:block">{data.profile.display_name}</span></div></header>
     <main className="px-5 sm:px-8 xl:px-10 py-8 max-w-[1440px] mx-auto">
-    {course?<CourseLearningPlayer courseId={course} onBack={()=>setCourse(null)}/>:<>
+    {course?(role==="student"?<CourseLearningPlayer courseId={course} onBack={()=>setCourse(null)}/>:<CurriculumEditor courseId={course} onBack={()=>setCourse(null)}/>):<>
     {authorizedView==="overview"&&<PortalOverview role={role} name={data.profile.display_name} onNavigate={navigate} onLearn={setCourse}/>}
     {admin && ["companies","courses","payments","audit","issues","settings"].includes(authorizedView)&&<div className="admin-console"><SuperAdminConsole key={authorizedView} initialTab={authorizedView as "companies"|"users"|"courses"|"payments"|"audit"|"issues"|"settings"}/></div>}
     {authorizedView==="users"&&admin&&<ManagedAccounts/>}

@@ -61,7 +61,7 @@ export function CourseBuilderModal({ open, onOpenChange, institutionId }: Course
       setCreatedCourseId(res.id);
       setSuccessMessage("Course established! Now add your first curriculum module.");
       setErrorMessage("");
-      void queryClient.invalidateQueries({ queryKey: ["courses"] });
+      void queryClient.invalidateQueries();
     },
     onError: (err: Error) => {
       setErrorMessage(err.message || "Failed to create course");
@@ -102,13 +102,13 @@ export function CourseBuilderModal({ open, onOpenChange, institutionId }: Course
           video_url: lessonVideoUrl.trim() || undefined,
           duration_minutes: Number(lessonDuration),
           sort_order: 1,
-          is_free_preview: true,
+          is_free_preview: false,
         },
       });
     },
     onSuccess: () => {
       setSuccessMessage("Lesson added successfully! Curriculum is live for enrollment.");
-      void queryClient.invalidateQueries({ queryKey: ["courses"] });
+      void queryClient.invalidateQueries();
       setTimeout(() => {
         onOpenChange(false);
       }, 1500);
@@ -127,9 +127,9 @@ export function CourseBuilderModal({ open, onOpenChange, institutionId }: Course
               <BookOpen className="h-5 w-5" />
             </span>
             <div>
-              <DialogTitle>Visual Course Curriculum Studio</DialogTitle>
+              <DialogTitle>Create session</DialogTitle>
               <DialogDescription>
-                Design structured courses, instructional modules, and video lecture content.
+                Add a session, module and first lesson.
               </DialogDescription>
             </div>
           </div>

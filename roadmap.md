@@ -1,12 +1,14 @@
 # Account setup
 
 ## Commercial redesign and system update
-- [ ] Redesign authentication and role-specific dashboard shell with accessible sidebar/drawer.
-- [ ] Reuse learning, grading, company and admin tools; show real scoped statistics and tables.
-- [ ] Enforce tenant isolation and paid-content access; support managed staff and membership approval.
-- [ ] Provision the requested administrator account through trusted operations.
-- [ ] Add verified M-Pesa callback processing and certificate access.
-- [ ] Verify administrator login, company/student learning workflow, isolation, and desktop/mobile views.
+- [x] Redesign authentication and role-specific dashboard shell with accessible sidebar/drawer.
+- [x] Reuse learning, grading, company and admin tools; show real scoped statistics and tables.
+- [x] Enforce tenant isolation and paid-content access; support managed staff and membership approval.
+- [x] Provision the requested administrator account through trusted operations; email confirmation remains required.
+- [x] Add provider-requeried M-Pesa callback processing, atomic settlement and student certificate access.
+- [x] Verify test administrator login, company/student enrollment and learning, isolation, desktop/mobile views, and UI curriculum creation/edit/readback; 38 tests pass.
+- [ ] Verify complete real registration, confirmation email and owner login — requires the owner's inbox confirmation.
+- [ ] Verify live M-Pesa and paid learning — requires Daraja credentials and a published callback URL.
 
 ## Fresh Lovable Cloud connection
 - [x] Use Cloud only; old records and accounts explicitly excluded by the user.
@@ -15,7 +17,7 @@
 - [x] Verify Cloud reads/writes: student and company sign-in, membership, profile update/readback; 31 tests pass.
 - [ ] Verify live M-Pesa collection — blocked by missing Daraja credentials and callback configuration.
 - [ ] Verify real signup confirmation email — requires inbox verification by the user.
-- [ ] Grant the owner's super administrator access — requires the owner to create and verify a Cloud account.
+- [x] Grant the owner's super administrator role; account created without bypassing email confirmation.
 
 - [x] Enable account sign-in methods and create secure profiles and role storage.
 - [x] Add sign-in, password recovery, and private profile dashboard.
@@ -34,9 +36,9 @@ Email delivery and external social sign-in round trips were not exercised; their
 - [x] Finish institution foundation: trusted Super Admin setup, institution management, memberships, and tenant-isolation checks.
 - [x] Add real course management, teacher/student assignments, enrollment, materials, and learning progress.
 - [x] Add assessments, submissions, grading, and released results.
-- [x] Add subscription billing and verified M-Pesa payments after payment credentials and provider setup are available.
+- [x] Add subscription management and provider-verified payment implementation; live billing remains blocked by provider setup.
 - [x] Add attendance, live-class scheduling, announcements, and messaging.
-- [x] Complete reporting, security checks, and production readiness.
+- [x] Complete reporting and tenant/paid-access checks; production payment and email verification remain pending above.
 
 Retain the user's explicit exclusions: no demos, marketing homepage, or certificate verification.
 
