@@ -439,37 +439,10 @@ export const saveCompanyLessonNoteFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => saveLessonNoteSchema.parse(input))
   .handler(async ({ data, context }) => {
-    // Also update the lesson content so it renders in the learning player
-    await context.supabase
-      .from("lessons" as never)
-      .update({
-        content: data.content,
-      } as never)
-      .eq("id" as never, data.lesson_id);
-
-    // If file_url provided, add to learning_materials
-    if (data.file_url) {
-      await context.supabase.from("learning_materials" as never).insert({
-        lesson_id: data.lesson_id,
-        title: data.title,
-        file_url: data.file_url,
-        file_type: "document",
-      } as never);
-    }
-
-    // Try inserting into lesson_notes if table exists
-    try {
-      await context.supabase.from("lesson_notes" as never).upsert({
-        lesson_id: data.lesson_id,
-        author_id: context.userId,
-        title: data.title,
-        content: data.content,
-        file_url: data.file_url || null,
-        updated_at: new Date().toISOString(),
-      } as never);
-    } catch {
-      // Table may not be migrated yet
-    }
+    const { error: lessonError } = await context.supabase.from("lessons").update({ content: data.content }).eq("id",data.lesson_id);
+    if(lessonError)throw new Error(lessonError.message);
+    if(data.file_url){const{error}=await context.supabase.from("learning_materials").insert({lesson_id:data.lesson_id,title:data.title,file_url:data.file_url,file_type:"document"});if(error)throw new Error(error.message);}
+    const{error:noteError}=await context.supabase.from("lesson_notes").insert({lesson_id:data.lesson_id,author_id:context.userId,title:data.title,content:data.content,file_url:data.file_url||null});if(noteError)throw new Error(noteError.message);
 
     return { success: true, message: "Lesson notes and materials updated successfully." };
   });
